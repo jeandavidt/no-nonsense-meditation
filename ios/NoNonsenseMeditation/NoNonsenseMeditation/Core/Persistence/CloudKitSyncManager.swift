@@ -6,11 +6,12 @@
 //
 
 import Foundation
-import CoreData
+@preconcurrency import CoreData
 import CloudKit
 
 /// Manager for monitoring and handling CloudKit sync status
 /// Provides sync state monitoring and error handling for iCloud sync
+@MainActor
 final class CloudKitSyncManager: ObservableObject {
 
     // MARK: - Types
@@ -20,7 +21,7 @@ final class CloudKitSyncManager: ObservableObject {
         case idle
         case inProgress
         case succeeded
-        case failed(Error)
+        case failed(String) // Changed from Error to String for Sendable conformance
     }
 
     // MARK: - Properties
@@ -75,10 +76,9 @@ final class CloudKitSyncManager: ObservableObject {
     /// Handle remote change notifications from CloudKit
     /// - Parameter notification: Notification object
     @objc private func handlePersistentStoreRemoteChange(_ notification: Notification) {
-        DispatchQueue.main.async { [weak self] in
-            // Remote changes detected - data is being synced from iCloud
-            self?.syncStatus = .inProgress
-        }
+        // Already on MainActor - no need for DispatchQueue.main.async
+        // Remote changes detected - data is being synced from iCloud
+        syncStatus = .inProgress
     }
 
     /// Handle CloudKit sync event notifications
@@ -89,12 +89,11 @@ final class CloudKitSyncManager: ObservableObject {
             return
         }
 
-        DispatchQueue.main.async { [weak self] in
-            if event.succeeded {
-                self?.syncStatus = .succeeded
-            } else if let error = event.error {
-                self?.syncStatus = .failed(error)
-            }
+        // Already on MainActor - update status directly
+        if event.succeeded {
+            syncStatus = .succeeded
+        } else if let error = event.error {
+            syncStatus = .failed(error.localizedDescription)
         }
     }
 
@@ -105,20 +104,22 @@ final class CloudKitSyncManager: ObservableObject {
         let container = CKContainer(identifier: persistenceController.cloudKitContainerIdentifier ?? "")
 
         container.accountStatus { [weak self] status, error in
-            DispatchQueue.main.async {
+            Task { @MainActor in
+                guard let self = self else { return }
+
                 if let error = error {
-                    self?.isCloudKitAvailable = false
-                    self?.syncStatus = .failed(error)
+                    self.isCloudKitAvailable = false
+                    self.syncStatus = .failed(error.localizedDescription)
                     return
                 }
 
                 switch status {
                 case .available:
-                    self?.isCloudKitAvailable = true
+                    self.isCloudKitAvailable = true
                 case .noAccount, .restricted, .couldNotDetermine, .temporarilyUnavailable:
-                    self?.isCloudKitAvailable = false
+                    self.isCloudKitAvailable = false
                 @unknown default:
-                    self?.isCloudKitAvailable = false
+                    self.isCloudKitAvailable = false
                 }
             }
         }

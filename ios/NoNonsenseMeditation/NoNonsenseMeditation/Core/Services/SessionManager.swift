@@ -106,7 +106,6 @@ actor SessionManager {
         let elapsedTime = await timerService.elapsedTime
 
         // Update session with final data
-        let context = persistenceController.viewContext
         session.completedAt = Date()
         session.durationTotal = actualTime / 60.0 // Convert to minutes
         session.durationElapsed = elapsedTime / 60.0 // Convert to minutes
@@ -138,6 +137,7 @@ actor SessionManager {
     ///   - actualDuration: Actual meditation time in seconds
     ///   - wasPaused: Whether the session was paused
     /// - Returns: The completed session
+    /// - Note: Returns NSManagedObject which is not Sendable, but safe to use with CoreData context
     @discardableResult
     func completeSession(plannedDuration: TimeInterval, actualDuration: TimeInterval, wasPaused: Bool) async -> MeditationSession? {
         // Create new session in CoreData
@@ -200,7 +200,6 @@ actor SessionManager {
             )
 
             // Mark as synced in CoreData
-            let context = persistenceController.viewContext
             session.syncedToHealthKit = true
             try? persistenceController.saveContext()
         } catch {

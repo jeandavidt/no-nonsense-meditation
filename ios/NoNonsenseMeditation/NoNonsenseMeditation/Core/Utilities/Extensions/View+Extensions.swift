@@ -95,19 +95,15 @@ extension View {
     ///   - isActive: Binding to control navigation
     ///   - destination: Destination view
     /// - Returns: View with navigation applied
+    /// - Note: Uses modern navigationDestination API compatible with iOS 16+
     @ViewBuilder
     func navigate<Destination: View>(
         when isActive: Binding<Bool>,
         @ViewBuilder destination: () -> Destination
     ) -> some View {
-        self.background(
-            NavigationLink(
-                destination: destination(),
-                isActive: isActive,
-                label: { EmptyView() }
-            )
-            .hidden()
-        )
+        self.navigationDestination(isPresented: isActive) {
+            destination()
+        }
     }
 
     // MARK: - Loading States

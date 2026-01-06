@@ -5,6 +5,11 @@ This document tracks fixes, features, and improvements to be implemented in sepa
 **Last Updated**: 2026-01-05
 **Current Status**: Build successful, Timer UI complete, Settings UI complete
 
+**Project Structure**:
+- Xcode project: `ios/NoNonsenseMeditation.xcodeproj`
+- Source files: `ios/NoNonsenseMeditation/NoNonsenseMeditation/`
+- Build command: `cd ios && xcodebuild -scheme NoNonsenseMeditation -destination 'platform=iOS Simulator,name=iPhone 16 Pro' build`
+
 ---
 
 ## 🔴 Critical Fixes
@@ -64,6 +69,23 @@ This document tracks fixes, features, and improvements to be implemented in sepa
 - [ ] Test audio playback on device
 - [ ] Ensure silent mode override works correctly
 
+---
+
+### Fix 4: Redundant UI elements
+**Branch**: `fix/redundant-ui`
+**Priority**: High
+**Estimate**: 10 min
+
+**Issues**:
+- Superfluous UI elements need to be removed:
+    - Advanced settings
+    - Quick-Select
+    - Back to home button
+
+**Tasks**:
+    - Remove Advanced settings
+    - Remove Quick-Select
+    - Remove Back to home button
 ---
 
 ## ✨ Feature Implementation
@@ -167,6 +189,21 @@ This document tracks fixes, features, and improvements to be implemented in sepa
 **New Files**:
 - `ios/NoNonsenseMeditation/NoNonsenseMeditation/Core/Intents/StartMeditationIntent.swift`
 - `ios/NoNonsenseMeditationWidget/` (new target)
+
+---
+
+### Feature 6: implement background sounds.
+**Branch**: `feature/background-sounds`
+**Priority**: Medium
+**Estimate**: 2-3 hours
+
+**Current Status**: Not started
+
+**Tasks**:
+- [ ] add the background sound assets to the project (see ./background-sounds)
+- [ ] create a sound picker in the setup screen.
+- [ ] implement sound preview playback upon tapping.
+- [ ] implement sound playback during meditation (looping)
 
 ---
 
@@ -278,8 +315,6 @@ This document tracks fixes, features, and improvements to be implemented in sepa
 
 **Devices to Test**:
 - [ ] iPhone 17 Pro (iOS 26.2)
-- [ ] iPhone SE (older device)
-- [ ] iPad Air (iPadOS 26.2)
 
 **Test Scenarios**:
 - [ ] Complete meditation flow
@@ -306,18 +341,6 @@ This document tracks fixes, features, and improvements to be implemented in sepa
 
 ---
 
-### Tech 2: SwiftLint Integration
-**Branch**: `tooling/swiftlint`
-**Priority**: Low
-**Estimate**: 1 hour
-
-**Tasks**:
-- [ ] Add SwiftLint to project
-- [ ] Configure .swiftlint.yml
-- [ ] Fix all linting issues
-- [ ] Add to CI/CD pipeline
-
----
 
 ### Tech 3: Documentation
 **Branch**: `docs/comprehensive-docs`

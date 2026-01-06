@@ -165,7 +165,7 @@ class HealthKitViewModel {
 
     /// Check if URL can be opened (iOS compatibility wrapper)
     private func canOpenURL(_ url: URL) async -> Bool {
-        await UIApplication.shared.canOpenURL(url)
+        UIApplication.shared.canOpenURL(url)
     }
 
     /// Open URL (iOS compatibility wrapper)

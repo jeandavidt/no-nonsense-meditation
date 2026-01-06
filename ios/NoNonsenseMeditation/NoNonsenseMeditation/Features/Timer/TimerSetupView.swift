@@ -25,12 +25,6 @@ struct TimerSetupView: View {
     /// Available duration options
     private let durationOptions = [1, 5, 10, 15, 20, 30, 45, 60, 90, 120]
 
-    /// Whether to show advanced settings
-    @State private var showAdvancedSettings = false
-
-    /// Custom duration input (for advanced mode)
-    @State private var customDuration: String = ""
-
     // MARK: - Computed Properties
 
     /// Convert selected duration to seconds
@@ -65,16 +59,8 @@ struct TimerSetupView: View {
                     // Duration Picker
                     durationPickerSection
 
-                    // Advanced Settings
-                    if showAdvancedSettings {
-                        advancedSettingsSection
-                    }
-
                     // Start Button
                     startButton
-
-                    // Quick Select
-                    quickSelectSection
 
                     Spacer()
                 }
@@ -133,64 +119,7 @@ struct TimerSetupView: View {
             .pickerStyle(.wheel)
             .frame(height: 150)
             .clipped()
-            .onChange(of: selectedDuration) { oldValue, newValue in
-                // Update custom duration field when picker changes
-                if !showAdvancedSettings {
-                    customDuration = String(newValue)
-                }
-            }
-
-            // Advanced settings toggle
-            Button(action: {
-                withAnimation {
-                    showAdvancedSettings.toggle()
-                }
-            }) {
-                HStack {
-                    Text(showAdvancedSettings ? "Simple Mode" : "Advanced Settings")
-                    Image(systemName: showAdvancedSettings ? "chevron.down" : "chevron.right")
-                }
-                .foregroundColor(.accentColor)
-            }
         }
-    }
-
-    /// Advanced settings section
-    private var advancedSettingsSection: some View {
-        VStack(spacing: 16) {
-            Text("Custom Duration")
-                .font(.headline)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            HStack {
-                TextField("Enter minutes", text: $customDuration)
-                    .keyboardType(.numberPad)
-                    .textFieldStyle(.roundedBorder)
-                    .onChange(of: customDuration) { oldValue, newValue in
-                        // Validate and update selected duration
-                        if let minutes = Int(newValue), minutes > 0 {
-                            selectedDuration = minutes
-                        }
-                    }
-
-                Button("Apply") {
-                    if let minutes = Int(customDuration), minutes > 0 {
-                        selectedDuration = minutes
-                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-                    }
-                }
-                .buttonStyle(.bordered)
-            }
-
-            // Validation message
-            if let minutes = Int(customDuration), minutes <= 0 {
-                Text("Please enter a positive number")
-                    .font(.caption)
-                    .foregroundColor(.red)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-        }
-        .transition(.opacity)
     }
 
     /// Start button
@@ -208,33 +137,6 @@ struct TimerSetupView: View {
         .disabled(selectedDuration <= 0)
     }
 
-    /// Quick select section
-    private var quickSelectSection: some View {
-        VStack(spacing: 12) {
-            Text("Quick Select")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 80), spacing: 8)], spacing: 8) {
-                ForEach([5, 10, 15, 20, 30], id: \.self) { minutes in
-                    Button(action: {
-                        selectedDuration = minutes
-                        customDuration = String(minutes)
-                    }) {
-                        Text("" + String(minutes) + " min")
-                            .frame(maxWidth: .infinity)
-                            .padding(8)
-                            .background(selectedDuration == minutes ? Color.accentColor : Color.gray.opacity(0.1))
-                            .foregroundColor(selectedDuration == minutes ? .white : .primary)
-                            .cornerRadius(8)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-    }
-
     // MARK: - Methods
 
     /// Start meditation with selected duration
@@ -247,13 +149,6 @@ struct TimerSetupView: View {
 
         // Navigate to active meditation view
         isActive = true
-    }
-
-    /// Reset to default values
-    private func resetToDefaults() {
-        selectedDuration = 10
-        customDuration = "10"
-        showAdvancedSettings = false
     }
 }
 

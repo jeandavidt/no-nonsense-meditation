@@ -191,36 +191,21 @@ struct SessionRecapView: View {
 
     /// Action buttons section
     private var actionButtonsSection: some View {
-        VStack(spacing: 16) {
-            // Start new session button
-            Button(action: {
-                // Reset and start new session
-                viewModel.resetTimer()
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "arrow.clockwise")
-                    Text("Start New Session")
-                }
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .padding()
+        // Start new session button
+        Button(action: {
+            // Reset and start new session
+            viewModel.resetTimer()
+        }) {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.clockwise")
+                Text("Start New Session")
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-
-            // Save and return button
-            Button(action: {
-                // Save session and return to main screen
-                viewModel.resetTimer()
-            }) {
-                Text("Return to Home")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-            }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
+            .font(.headline)
+            .frame(maxWidth: .infinity)
+            .padding()
         }
+        .buttonStyle(.borderedProminent)
+        .controlSize(.large)
     }
 
     // MARK: - Helper Views

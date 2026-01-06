@@ -11,6 +11,8 @@ import Combine
 
 /// ViewModel for managing meditation timer state and user interactions
 /// Uses @Observable macro for SwiftUI observation
+/// Isolated to MainActor for UI updates and concurrency safety
+@MainActor
 @Observable
 class TimerViewModel {
 
@@ -70,7 +72,7 @@ class TimerViewModel {
     /// Start a new timer with the specified duration
     /// - Parameter duration: Total duration in seconds
     func startTimer(duration: TimeInterval) {
-        Task { @MainActor in
+        Task {
             // Reset state
             self.state = .idle
             self.remainingTime = duration
@@ -96,7 +98,7 @@ class TimerViewModel {
 
     /// Pause the currently running timer
     func pauseTimer() {
-        Task { @MainActor in
+        Task {
             guard state == .running else { return }
 
             await timerService.pauseTimer()
@@ -115,7 +117,7 @@ class TimerViewModel {
 
     /// Resume a paused timer
     func resumeTimer() {
-        Task { @MainActor in
+        Task {
             guard state == .paused else { return }
 
             // Calculate remaining time for notification
@@ -135,7 +137,7 @@ class TimerViewModel {
 
     /// Stop the timer and mark as completed
     func stopTimer() {
-        Task { @MainActor in
+        Task {
             await timerService.stopTimer()
             await updateFromTimerService()
 
@@ -147,7 +149,7 @@ class TimerViewModel {
 
             // Save session
             let actualMeditationTime = await timerService.getActualMeditationTime()
-            await sessionManager.completeSession(
+            _ = await sessionManager.completeSession(
                 plannedDuration: totalDuration,
                 actualDuration: actualMeditationTime,
                 wasPaused: state == .paused
@@ -160,7 +162,7 @@ class TimerViewModel {
 
     /// Reset timer to idle state
     func resetTimer() {
-        Task { @MainActor in
+        Task {
             await timerService.resetTimer()
             await updateFromTimerService()
 
@@ -180,7 +182,7 @@ class TimerViewModel {
         Timer.publish(every: 1.0, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
-                Task { @MainActor in
+                Task {
                     await self?.updateFromTimerService()
                 }
             }
@@ -194,14 +196,12 @@ class TimerViewModel {
         let elapsedTime = await timerService.getElapsedTime()
         let progress = await timerService.getProgress()
 
-        // Update state on main actor
-        await MainActor.run {
-            self.state = mapTimerState(timerState)
-            self.remainingTime = remainingTime
-            self.elapsedTime = elapsedTime
-            self.progress = progress
-            self.formattedTime = formatTime(remainingTime)
-        }
+        // Update state (already on MainActor)
+        self.state = mapTimerState(timerState)
+        self.remainingTime = remainingTime
+        self.elapsedTime = elapsedTime
+        self.progress = progress
+        self.formattedTime = formatTime(remainingTime)
     }
 
     /// Map timer service state to view model state
