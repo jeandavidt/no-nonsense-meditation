@@ -46,6 +46,9 @@ class TimerViewModel {
     /// Formatted remaining time string for display
     private(set) var formattedTime: String = "00:00"
 
+    /// Selected background sound for the meditation session
+    private(set) var selectedBackgroundSound: BackgroundSound = .none
+
     /// Timer service for countdown logic
     private let timerService = MeditationTimerService()
 
@@ -65,6 +68,7 @@ class TimerViewModel {
 
     init() {
         setupSubscriptions()
+        loadBackgroundSoundPreference()
     }
 
     // MARK: - Public Methods
@@ -85,6 +89,11 @@ class TimerViewModel {
             await timerService.startTimer(duration: duration)
             await updateFromTimerService()
 
+            // Start background sound if selected
+            if selectedBackgroundSound != .none {
+                try? await audioService.startBackgroundSound(selectedBackgroundSound)
+            }
+
             // Play start sound
             await audioService.playStartSound()
 
@@ -103,6 +112,9 @@ class TimerViewModel {
 
             await timerService.pauseTimer()
             await updateFromTimerService()
+
+            // Pause background sound
+            await audioService.pauseBackgroundSound()
 
             // Play pause sound
             await audioService.playPauseSound()
@@ -127,6 +139,9 @@ class TimerViewModel {
             await timerService.resumeTimer()
             await updateFromTimerService()
 
+            // Resume background sound
+            await audioService.resumeBackgroundSound()
+
             // Play resume sound
             await audioService.playResumeSound()
 
@@ -140,6 +155,9 @@ class TimerViewModel {
         Task {
             await timerService.stopTimer()
             await updateFromTimerService()
+
+            // Stop background sound
+            await audioService.stopBackgroundSound()
 
             // Play completion sound
             await audioService.playCompletionSound()
@@ -165,6 +183,9 @@ class TimerViewModel {
         Task {
             await timerService.resetTimer()
             await updateFromTimerService()
+
+            // Stop background sound
+            await audioService.stopBackgroundSound()
 
             // Cancel any pending notifications
             await notificationService.cancelCompletionNotification()
@@ -255,5 +276,35 @@ class TimerViewModel {
     /// Get formatted total duration
     var formattedTotalDuration: String {
         return formatTime(totalDuration)
+    }
+
+    // MARK: - Background Sound Management
+
+    /// Set the background sound for the meditation session
+    /// - Parameter sound: The background sound to use
+    func setBackgroundSound(_ sound: BackgroundSound) {
+        self.selectedBackgroundSound = sound
+        sound.saveToUserDefaults()
+    }
+
+    /// Load saved background sound preference
+    func loadBackgroundSoundPreference() {
+        self.selectedBackgroundSound = BackgroundSound.loadFromUserDefaults()
+    }
+
+    /// Preview a background sound
+    /// - Parameter sound: The sound to preview
+    func previewBackgroundSound(_ sound: BackgroundSound) {
+        Task {
+            try? await audioService.stopPreview()
+            try? await audioService.previewBackgroundSound(sound, duration: 3.0)
+        }
+    }
+
+    /// Stop any preview playback
+    func stopPreview() {
+        Task {
+            try? await audioService.stopPreview()
+        }
     }
 }

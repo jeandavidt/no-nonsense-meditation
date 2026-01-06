@@ -3,12 +3,13 @@
 //  NoNonsenseMeditation
 //
 //  Created on 2026-01-05.
+//  Updated on 2026-01-06 - Added background sound selection
 //
 
 import SwiftUI
 
-/// View for setting up meditation timer duration
-/// Allows users to select meditation duration before starting
+/// View for setting up meditation timer duration and background sound
+/// Allows users to select meditation duration and optional background audio before starting
 struct TimerSetupView: View {
 
     // MARK: - Properties
@@ -58,6 +59,9 @@ struct TimerSetupView: View {
 
                     // Duration Picker
                     durationPickerSection
+
+                    // Background Sound Picker
+                    backgroundSoundSection
 
                     // Start Button
                     startButton
@@ -122,6 +126,70 @@ struct TimerSetupView: View {
         }
     }
 
+    /// Background sound selection section
+    private var backgroundSoundSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Background Sound")
+                .font(.headline)
+                .padding(.horizontal)
+
+            VStack(spacing: 0) {
+                ForEach(BackgroundSound.allCases) { sound in
+                    backgroundSoundRow(for: sound)
+
+                    if sound != BackgroundSound.allCases.last {
+                        Divider()
+                            .padding(.leading, 60)
+                    }
+                }
+            }
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color(.systemGray5), lineWidth: 1)
+            )
+        }
+    }
+
+    /// Individual background sound row
+    private func backgroundSoundRow(for sound: BackgroundSound) -> some View {
+        Button(action: {
+            selectBackgroundSound(sound)
+        }) {
+            HStack(spacing: 16) {
+                // Icon
+                Image(systemName: sound.iconName)
+                    .font(.title2)
+                    .foregroundColor(.accentColor)
+                    .frame(width: 32, height: 32)
+
+                // Name and description
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(sound.displayName)
+                        .font(.body)
+                        .foregroundColor(.primary)
+                    Text(sound.description)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer()
+
+                // Checkmark
+                if viewModel.selectedBackgroundSound == sound {
+                    Image(systemName: "checkmark")
+                        .font(.body.weight(.semibold))
+                        .foregroundColor(.accentColor)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
     /// Start button
     private var startButton: some View {
         Button(action: {
@@ -139,10 +207,25 @@ struct TimerSetupView: View {
 
     // MARK: - Methods
 
+    /// Select a background sound
+    private func selectBackgroundSound(_ sound: BackgroundSound) {
+        viewModel.setBackgroundSound(sound)
+
+        // Play preview if not "none"
+        if sound != .none {
+            viewModel.previewBackgroundSound(sound)
+        } else {
+            viewModel.stopPreview()
+        }
+    }
+
     /// Start meditation with selected duration
     private func startMeditation() {
         // Validate duration
         guard selectedDuration > 0 else { return }
+
+        // Stop any preview playback
+        viewModel.stopPreview()
 
         // Start timer
         viewModel.startTimer(duration: durationInSeconds)

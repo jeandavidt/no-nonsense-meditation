@@ -363,6 +363,127 @@ None encountered
 
 ---
 
+## Session 4: 2026-01-06 - Background Sounds Feature
+
+**Duration**: Completed by previous agent
+**Phase**: Phase 2 - Core Features (Background Sounds)
+**Status**: 🟢 Complete
+
+### Goals
+- [x] Implement background sound selection feature
+- [x] Add audio assets for background sounds and meditation bells
+- [x] Integrate background sound playback with timer lifecycle
+- [x] Add sound preview functionality
+- [x] Persist user's background sound preference
+
+### Agents Used
+- **swift-expert (Swift/iOS Development)**: Implemented background sound feature across multiple files
+- **Coordinator (current session)**: Reviewed and committed the work
+
+### Tasks Completed
+
+#### 1. Created BackgroundSound Model ✅
+- **Description**: Enum-based model for background sound options
+- **Agent**: swift-expert (Swift/iOS Development)
+- **Evidence**: [BackgroundSound.swift](ios/NoNonsenseMeditation/NoNonsenseMeditation/Core/Models/BackgroundSound.swift)
+- **Key Features**:
+  - Three sound options: Brown Noise, Library Ambience, Wind Chimes
+  - Display properties (name, icon, description)
+  - Audio file properties (filename, extension)
+  - UserDefaults persistence for saving preferences
+  - Sendable conformance for concurrency safety
+
+#### 2. Enhanced AudioService ✅
+- **Description**: Added background sound playback capabilities
+- **Agent**: swift-expert (Backend Architecture)
+- **Evidence**: [AudioService.swift](ios/NoNonsenseMeditation/NoNonsenseMeditation/Core/Services/AudioService.swift)
+- **Key Features**:
+  - Separate audio players for bells and background sounds
+  - Background sound looping with infinite repeat
+  - Preview playback with configurable duration
+  - Pause/resume background sound support
+  - Proper audio session mixing (.mixWithOthers)
+  - Volume control for background sounds
+
+#### 3. Updated TimerViewModel ✅
+- **Description**: Integrated background sound management into timer lifecycle
+- **Agent**: swift-expert (Swift/iOS Development)
+- **Evidence**: [TimerViewModel.swift](ios/NoNonsenseMeditation/NoNonsenseMeditation/Core/ViewModels/TimerViewModel.swift)
+- **Key Features**:
+  - Background sound selection state management
+  - Start background sound when timer starts
+  - Pause/resume background sound with timer
+  - Stop background sound when timer completes
+  - Preview and stop preview methods
+  - Load saved preference on initialization
+
+#### 4. Enhanced TimerSetupView ✅
+- **Description**: Added background sound picker UI
+- **Agent**: swift-expert (UI Design)
+- **Evidence**: [TimerSetupView.swift](ios/NoNonsenseMeditation/NoNonsenseMeditation/Features/Timer/TimerSetupView.swift)
+- **Key Features**:
+  - Background sound selection section
+  - Individual sound rows with icons and descriptions
+  - Checkmark indicator for selected sound
+  - Tap to select sound
+  - Clean, minimal UI matching app philosophy
+
+#### 5. Added Audio Assets ✅
+- **Description**: All required audio files added to project
+- **Agent**: swift-expert (DevOps)
+- **Evidence**: [Resources/Sounds/](ios/NoNonsenseMeditation/NoNonsenseMeditation/Resources/Sounds/)
+- **Assets Added**:
+  - **Background Sounds**: brown_noise.m4a (78MB), library_noise.m4a (291MB), wind_chimes.m4a (67MB)
+  - **Bell Sounds**: meditation_start.wav, meditation_pause.wav, meditation_resume.wav, meditation_completion.wav
+  - Total: 7 audio files (~436MB)
+
+#### 6. Simplified ORCHESTRATOR.md ✅
+- **Description**: Streamlined workflow guide to focus on persistence
+- **Agent**: Coordinator
+- **Evidence**: [ORCHESTRATOR.md](ORCHESTRATOR.md)
+- **Changes**: Reduced from 636 lines to 30 lines, focusing on checkpoint-based workflow
+
+### Evidence Links
+- [BackgroundSound.swift](ios/NoNonsenseMeditation/NoNonsenseMeditation/Core/Models/BackgroundSound.swift)
+- [AudioService.swift](ios/NoNonsenseMeditation/NoNonsenseMeditation/Core/Services/AudioService.swift)
+- [TimerViewModel.swift](ios/NoNonsenseMeditation/NoNonsenseMeditation/Core/ViewModels/TimerViewModel.swift)
+- [TimerSetupView.swift](ios/NoNonsenseMeditation/NoNonsenseMeditation/Features/Timer/TimerSetupView.swift)
+- [Resources/Sounds/](ios/NoNonsenseMeditation/NoNonsenseMeditation/Resources/Sounds/)
+
+### Blockers
+None encountered
+
+### Next Session Goals
+1. **Complete HealthKit Integration**:
+   - Finish HealthKitService implementation
+   - Test authorization flow
+   - Implement mindful minutes sync after session
+   - Handle authorization denied gracefully
+
+2. **Testing & Quality**:
+   - Write unit tests for BackgroundSound model
+   - Add tests for AudioService background playback
+   - Test timer integration with background sounds
+   - Increase test coverage to >70%
+
+3. **Device Testing**:
+   - Test audio playback on physical device
+   - Verify background sound mixing works correctly
+   - Test silent mode override behavior
+   - Verify audio files load correctly
+
+### Notes
+- Background sounds feature completes Feature 6 from TODO.md
+- Audio assets are large (436MB total) - consider optimization if needed
+- All code follows Swift concurrency best practices
+- UserDefaults persistence ensures preference survives app restarts
+- Preview functionality allows users to hear sounds before selecting
+
+### Agent IDs for Resume
+- N/A (work completed by previous agent, reviewed and committed by coordinator)
+
+---
+
 ## Progress Summary
 
 | Session | Date | Phase | Tasks Completed | Status | Key Achievements |
