@@ -136,12 +136,10 @@ struct ActiveMeditationView: View {
                         Image(systemName: "pause.fill")
                         Text("Pause")
                     }
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
+                    .frame(minWidth: 160)
                 }
                 .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                .controlSize(.regular)
             } else if viewModel.isPaused {
                 // Resume button
                 Button(action: {
@@ -151,24 +149,20 @@ struct ActiveMeditationView: View {
                         Image(systemName: "play.fill")
                         Text("Resume")
                     }
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
+                    .frame(minWidth: 160)
                 }
                 .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                .controlSize(.regular)
 
                 // End session button
                 Button(action: {
                     endMeditationEarly()
                 }) {
                     Text("End Session")
-                        .font(.headline)
-                        .frame(maxWidth: .infinity)
-                        .padding()
+                        .frame(minWidth: 160)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.large)
+                .controlSize(.regular)
                 .foregroundColor(.red)
             } else if viewModel.isRunning && viewModel.remainingTime <= 0 {
                 // Overtime State - "Finish Session" button
@@ -182,12 +176,10 @@ struct ActiveMeditationView: View {
                         Image(systemName: "checkmark.circle.fill")
                         Text("Finish Session")
                     }
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
+                    .frame(minWidth: 160)
                 }
                 .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                .controlSize(.regular)
                 .tint(.green) // distinct color to show completion
             } else if viewModel.isCompleted {
                 // Complete button (fallback if already stopped)
@@ -198,12 +190,10 @@ struct ActiveMeditationView: View {
                         Image(systemName: "chart.bar.fill")
                         Text("View Session Recap")
                     }
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
+                    .frame(minWidth: 180)
                 }
                 .buttonStyle(.borderedProminent)
-                .controlSize(.large)
+                .controlSize(.regular)
             }
         }
         .transition(.opacity)
