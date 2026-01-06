@@ -1,0 +1,112 @@
+name: NoNonsenseMeditation
+
+options:
+  bundleIdPrefix: com.jeandavidt
+  deploymentTarget:
+    iOS: "17.0"
+  developmentLanguage: en
+  createIntermediateGroups: true
+  generateEmptyDirectories: true
+
+settings:
+  base:
+    IPHONEOS_DEPLOYMENT_TARGET: "17.0"
+    SWIFT_VERSION: "5.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    TARGETED_DEVICE_FAMILY: "1,2"
+    SUPPORTS_MACCATALYST: NO
+    SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD: NO
+    SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD: NO
+    SUPPORTED_PLATFORMS: "iphoneos iphonesimulator"
+
+targets:
+  NoNonsenseMeditation:
+    type: application
+    platform: iOS
+    sources:
+      - path: NoNonsenseMeditation
+        name: NoNonsenseMeditation
+        excludes:
+          - "*.md"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.jeandavidt.NoNonsenseMeditation
+        CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_ASSET_PATHS: "\"NoNonsenseMeditation/Preview Content\""
+        ENABLE_PREVIEWS: YES
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown"
+        INFOPLIST_KEY_NSHealthShareUsageDescription: "NoNonsenseMeditation needs access to read your mindful minutes to track your meditation progress and provide insights."
+        INFOPLIST_KEY_NSHealthUpdateUsageDescription: "NoNonsenseMeditation needs access to write mindful minutes to HealthKit to record your meditation sessions."
+        INFOPLIST_KEY_UIBackgroundModes: "fetch remote-notification"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        CODE_SIGN_ENTITLEMENTS: NoNonsenseMeditation/NoNonsenseMeditation.entitlements
+        SWIFT_EMIT_LOC_STRINGS: YES
+    dependencies:
+      - framework: System/Library/Frameworks/HealthKit.framework
+        embed: false
+      - framework: System/Library/Frameworks/CloudKit.framework
+        embed: false
+    scheme:
+      testTargets:
+        - NoNonsenseMeditationTests
+        - NoNonsenseMeditationUITests
+      gatherCoverageData: true
+
+  NoNonsenseMeditationTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - NoNonsenseMeditationTests
+    dependencies:
+      - target: NoNonsenseMeditation
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.jeandavidt.NoNonsenseMeditationTests
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_EMIT_LOC_STRINGS: NO
+
+  NoNonsenseMeditationUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - NoNonsenseMeditationUITests
+    dependencies:
+      - target: NoNonsenseMeditation
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.jeandavidt.NoNonsenseMeditationUITests
+        CODE_SIGN_STYLE: Automatic
+        GENERATE_INFOPLIST_FILE: YES
+        SWIFT_EMIT_LOC_STRINGS: NO
+        TEST_TARGET_NAME: NoNonsenseMeditation
+
+schemes:
+  NoNonsenseMeditation:
+    build:
+      targets:
+        NoNonsenseMeditation: all
+        NoNonsenseMeditationTests: [test]
+        NoNonsenseMeditationUITests: [test]
+    run:
+      config: Debug
+    test:
+      config: Debug
+      gatherCoverageData: true
+      targets:
+        - NoNonsenseMeditationTests
+        - NoNonsenseMeditationUITests
+    profile:
+      config: Release
+    analyze:
+      config: Debug
+    archive:
+      config: Release

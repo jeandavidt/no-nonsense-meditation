@@ -114,3 +114,10 @@ evidence/
 *.gcno
 *.profdata
 *.profraw
+
+# XcodeGen generated files
+ios/*.xcodeproj/
+
+# Build logs
+ios/build*.log
+ios/*.log

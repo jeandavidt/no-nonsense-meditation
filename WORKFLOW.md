@@ -11,6 +11,8 @@ This project uses an **autonomous multi-agent orchestration system** where speci
 3. **Session Persistence**: State tracked via files (PROJECT.md, PROGRESS.md) + agent resume capability
 4. **Phase-Gated Progress**: Must pass quality gates before advancing to next phase
 5. **Hybrid State Management**: File-based tracking + agent memory for continuity
+6. **Centralized Coordination**: All coordination, task-tracking, and reporting occur in centralized files (PROJECT.md, PROGRESS.md)
+7. **Small Task Delegation**: Agents are assigned focused, manageable tasks rather than marathon sessions
 
 ---
 
@@ -18,29 +20,29 @@ This project uses an **autonomous multi-agent orchestration system** where speci
 
 ### Orchestration Layer
 
-#### Studio Producer
+#### Studio Producer (devstral2)
 - **Role**: High-level project orchestration and resource allocation
 - **Responsibilities**:
   - Monitor overall project health across sessions
-  - Allocate agents to phases based on current needs
+  - Allocate devstral2 instances to phases based on current needs
   - Escalate blockers and coordinate complex dependencies
   - Transition between project phases
 - **When to invoke**: Start of each session, phase transitions, major blockers
 
-#### Project Shepherd
+#### Project Shepherd (devstral2)
 - **Role**: Day-to-day coordination and task management
 - **Responsibilities**:
   - Break down phase goals into actionable tasks
-  - Monitor daily progress and agent workloads
+  - Monitor daily progress and devstral2 workloads
   - Update PROGRESS.md with session outcomes
-  - Coordinate handoffs between agents
+  - Coordinate handoffs between devstral2 instances
 - **When to invoke**: Within-session task coordination
 
 ---
 
 ### Development Layer
 
-#### swift-expert
+#### devstral2 (Swift/iOS Development)
 - **Role**: Primary iOS/Swift development specialist
 - **Responsibilities**:
   - Implement SwiftUI views and ViewModels
@@ -54,7 +56,7 @@ This project uses an **autonomous multi-agent orchestration system** where speci
   - Use structured concurrency (async/await, actors)
   - No external dependencies (iOS SDK only)
 
-#### Backend Architect
+#### devstral2 (Backend Architecture)
 - **Role**: Data layer and service architecture
 - **Responsibilities**:
   - Design and implement CoreData schema with CloudKit
@@ -67,7 +69,7 @@ This project uses an **autonomous multi-agent orchestration system** where speci
   - Proper CoreData concurrency handling
   - CloudKit sync with conflict resolution
 
-#### DevOps Automator
+#### devstral2 (DevOps Automation)
 - **Role**: Build configuration and deployment automation
 - **Responsibilities**:
   - Initialize and configure Xcode project
@@ -84,35 +86,25 @@ This project uses an **autonomous multi-agent orchestration system** where speci
 
 ### Quality Assurance Layer
 
-#### EvidenceQA
-- **Role**: Screenshot-obsessed QA specialist
+#### devstral2 (QA/Testing)
+- **Role**: Screenshot-obsessed QA specialist and test certification
 - **Responsibilities**:
   - Demand visual proof for every implemented feature
-  - Default to finding 3-5 issues per review
   - Validate UI against spec (colors, typography, spacing)
   - Verify user flows match Product Specification
   - Check accessibility features (VoiceOver labels, contrast)
-- **Quality Standards**:
-  - **Default stance**: "NEEDS WORK" until proven otherwise
-  - **Evidence required**: Screenshots or screen recordings
-  - **No fantasy approvals**: Must see it running
-- **When to invoke**: After any UI implementation, before phase completion
-
-#### testing-reality-checker
-- **Role**: Evidence-based test certification
-- **Responsibilities**:
   - Validate that tests actually run and pass
   - Verify test coverage meets 70% threshold
   - Check test quality (not just passing, but meaningful)
   - Ensure no flaky or fake tests
   - Certify test suites before production readiness
 - **Quality Standards**:
-  - **Default stance**: "NEEDS WORK"
-  - **Evidence required**: Test run output, coverage reports
-  - **Overwhelming proof needed**: Screenshots of Xcode test results
-- **When to invoke**: After writing tests, before phase 3 completion
+  - **Default stance**: "NEEDS WORK" until proven otherwise
+  - **Evidence required**: Screenshots, screen recordings, test results, coverage reports
+  - **No fantasy approvals**: Must see it running
+- **When to invoke**: After any UI implementation, after writing tests, before phase completion
 
-#### Performance Benchmarker
+#### devstral2 (Performance Benchmarking)
 - **Role**: Performance validation and optimization
 - **Responsibilities**:
   - Measure UI performance (must maintain 60fps)
@@ -130,7 +122,7 @@ This project uses an **autonomous multi-agent orchestration system** where speci
 
 ### Design Layer
 
-#### UI Designer
+#### devstral2 (UI Design)
 - **Role**: Visual design implementation and accessibility
 - **Responsibilities**:
   - Implement color scheme per spec (accent, timer, success colors)
@@ -598,6 +590,55 @@ If quality gate fails:
 
 ---
 
+## Task Delegation Strategy
+
+### Small, Focused Tasks
+
+To prevent marathon sessions and ensure manageable workloads:
+
+1. **Task Size**: Each task should be completable in 1-2 hours max
+2. **Clear Scope**: Tasks must have specific, measurable outcomes
+3. **Evidence Requirements**: Define required evidence upfront
+4. **Dependency Mapping**: Explicitly state prerequisites
+
+**Example of Good Task Definition**:
+```
+- Task: Implement TimerViewModel with @Observable macro
+- Scope: Create TimerViewModel.swift with countdown logic
+- Evidence: Code compiles without warnings, screenshot of timer at 10:00
+- Dependencies: CoreData schema must be complete
+- Estimated Time: 1 hour
+```
+
+### Task Breakdown Process
+
+1. **Project Shepherd** breaks phases into small tasks
+2. **Each task gets its own entry** in PROGRESS.md
+3. **Tasks are assigned** to specific devstral2 instances
+4. **Completion is tracked** with evidence links
+5. **Blockers are documented** immediately
+
+## Centralized Coordination
+
+### Single Source of Truth
+
+All project coordination happens in **PROJECT.md** and **PROGRESS.md**:
+
+- **PROJECT.md**: Overall structure, phases, agent assignments, quality metrics
+- **PROGRESS.md**: Session logs, completed tasks, evidence, blockers, next steps
+
+### No Documentation Litter
+
+**Prohibited**: Creating new markdown files for coordination
+**Required**: All updates go to PROJECT.md or PROGRESS.md
+
+### Evidence Management
+
+All evidence (screenshots, test results, etc.) is:
+1. **Stored in centralized location** (evidence/ directory)
+2. **Referenced in PROGRESS.md** with clear links
+3. **Organized by session and task**
+
 ## Autonomous Operation
 
 ### Agent Self-Coordination
@@ -607,7 +648,7 @@ Agents are expected to:
 2. **Understand dependencies** (what needs to be done before their work)
 3. **Update progress** as they complete tasks
 4. **Provide evidence** proactively (screenshots, logs, test results)
-5. **Call quality agents** (EvidenceQA, testing-reality-checker) when appropriate
+5. **Call quality agents** (devstral2 QA/Testing) when appropriate
 6. **Communicate blockers** clearly in PROGRESS.md
 
 ### Minimal Human Intervention

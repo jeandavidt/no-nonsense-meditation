@@ -47,156 +47,137 @@ Start Phase 4: Polish & Deployment
 
 ## Agent Invocation Commands
 
-### Studio Producer (Orchestration)
+### Studio Producer (devstral2 Orchestration)
 
 **When to use**: Start of session, phase transitions, major blockers
 
 ```
-Invoke Studio Producer to assess current project state and allocate resources for the next phase.
+Invoke Studio Producer (devstral2) to assess current project state and allocate resources for the next phase.
 ```
 
 What it does:
 - Reads PROJECT.md and PROGRESS.md
 - Assesses current phase completion
 - Identifies blockers
-- Allocates appropriate agents
+- Allocates appropriate devstral2 instances
 - Sets session goals
 
-### Project Shepherd (Coordination)
+### Project Shepherd (devstral2 Coordination)
 
 **When to use**: Task breakdown, daily coordination
 
 ```
-Invoke Project Shepherd to break down [Phase/Task] into actionable items and coordinate agents.
+Invoke Project Shepherd (devstral2) to break down [Phase/Task] into actionable items and coordinate devstral2 instances.
 ```
 
 What it does:
 - Breaks phases into specific tasks
-- Coordinates agent handoffs
+- Coordinates devstral2 instance handoffs
 - Updates PROGRESS.md
 - Monitors task completion
 
 ### Development Agents
 
-#### swift-expert
+#### devstral2 (Swift/iOS Development)
 
 **When to use**: Swift code, SwiftUI views, ViewModels, App Intents
 
 ```
-Invoke swift-expert to implement [specific feature/component].
+Invoke devstral2 (Swift/iOS Development) to implement [specific feature/component].
 ```
 
 Examples:
 ```
-Invoke swift-expert to implement TimerViewModel with @Observable macro.
-Invoke swift-expert to create CircularTimerDial SwiftUI component.
-Invoke swift-expert to build App Intents for Shortcuts integration.
+Invoke devstral2 (Swift/iOS Development) to implement TimerViewModel with @Observable macro.
+Invoke devstral2 (Swift/iOS Development) to create CircularTimerDial SwiftUI component.
+Invoke devstral2 (Swift/iOS Development) to build App Intents for Shortcuts integration.
 ```
 
-#### Backend Architect
+#### devstral2 (Backend Architecture)
 
 **When to use**: CoreData, CloudKit, HealthKit, service architecture
 
 ```
-Invoke Backend Architect to [design/implement] [specific backend component].
+Invoke devstral2 (Backend Architecture) to [design/implement] [specific backend component].
 ```
 
 Examples:
 ```
-Invoke Backend Architect to set up CoreData schema with CloudKit integration.
-Invoke Backend Architect to implement HealthKitService actor.
-Invoke Backend Architect to design SessionManager actor for session lifecycle.
+Invoke devstral2 (Backend Architecture) to set up CoreData schema with CloudKit integration.
+Invoke devstral2 (Backend Architecture) to implement HealthKitService actor.
+Invoke devstral2 (Backend Architecture) to design SessionManager actor for session lifecycle.
 ```
 
-#### DevOps Automator
+#### devstral2 (DevOps Automation)
 
 **When to use**: Project setup, build configuration, deployment
 
 ```
-Invoke DevOps Automator to [configure/setup] [build/deployment aspect].
+Invoke devstral2 (DevOps Automation) to [configure/setup] [build/deployment aspect].
 ```
 
 Examples:
 ```
-Invoke DevOps Automator to initialize Xcode project with proper capabilities.
-Invoke DevOps Automator to configure release build settings and code signing.
-Invoke DevOps Automator to set up build schemes for Debug and Release.
+Invoke devstral2 (DevOps Automation) to initialize Xcode project with proper capabilities.
+Invoke devstral2 (DevOps Automation) to configure release build settings and code signing.
+Invoke devstral2 (DevOps Automation) to set up build schemes for Debug and Release.
 ```
 
 ### Quality Agents
 
-#### EvidenceQA
+#### devstral2 (QA/Testing)
 
-**When to use**: After UI implementation, before phase completion
+**When to use**: After UI implementation, after writing tests, before phase completion
 
 ```
-Invoke EvidenceQA to validate [feature/UI] with evidence requirements.
+Invoke devstral2 (QA/Testing) to validate [feature/UI] with evidence requirements and certify test suite.
 ```
 
 What it does:
 - Demands screenshots/recordings
 - Validates against spec
+- Validates that tests actually run and pass
+- Checks coverage meets 70% threshold
+- Requires Xcode test result screenshots
 - Defaults to "NEEDS WORK"
-- Finds 3-5 issues per review
 - Approves only with overwhelming evidence
 
 Examples:
 ```
-Invoke EvidenceQA to validate Timer UI implementation against spec.
-Invoke EvidenceQA to review all Phase 2 features before advancing to Phase 3.
+Invoke devstral2 (QA/Testing) to validate Timer UI implementation against spec.
+Invoke devstral2 (QA/Testing) to review all Phase 2 features and certify test suite before advancing to Phase 3.
 ```
 
-#### testing-reality-checker
-
-**When to use**: After writing tests, before test certification
-
-```
-Invoke testing-reality-checker to certify test suite with evidence.
-```
-
-What it does:
-- Validates tests actually run and pass
-- Checks coverage meets 70% threshold
-- Requires Xcode test result screenshots
-- Defaults to "NEEDS WORK"
-- Grants certification only with proof
-
-Examples:
-```
-Invoke testing-reality-checker to certify unit test suite for Phase 3.
-Invoke testing-reality-checker to validate test coverage report.
-```
-
-#### Performance Benchmarker
+#### devstral2 (Performance Benchmarking)
 
 **When to use**: Performance validation, optimization
 
 ```
-Invoke Performance Benchmarker to validate [performance aspect].
+Invoke devstral2 (Performance Benchmarking) to validate [performance aspect].
 ```
 
 Examples:
 ```
-Invoke Performance Benchmarker to validate 60fps UI performance.
-Invoke Performance Benchmarker to measure app launch time.
-Invoke Performance Benchmarker to profile memory usage during meditation sessions.
+Invoke devstral2 (Performance Benchmarking) to validate 60fps UI performance.
+Invoke devstral2 (Performance Benchmarking) to measure app launch time.
+Invoke devstral2 (Performance Benchmarking) to profile memory usage during meditation sessions.
 ```
 
 ### Design Agents
 
-#### UI Designer
+#### devstral2 (UI Design)
 
 **When to use**: Visual design, colors, animations, accessibility
 
 ```
-Invoke UI Designer to implement [design aspect].
+Invoke devstral2 (UI Design) to implement [design aspect].
 ```
 
 Examples:
 ```
-Invoke UI Designer to apply color scheme per spec.
-Invoke UI Designer to implement animations for timer controls.
-Invoke UI Designer to validate WCAG AA contrast ratios.
+Invoke devstral2 (UI Design) to apply color scheme per spec.
+Invoke devstral2 (UI Design) to implement animations for timer controls.
+Invoke devstral2 (UI Design) to validate WCAG AA contrast ratios.
 ```
 
 ---
@@ -591,8 +572,11 @@ User: "Run full quality validation for Phase 2"
 4. **Use quality gates**: Don't skip validation
 5. **Document everything**: PROGRESS.md is the source of truth
 6. **Resume agents**: Use agent IDs for continuity
-7. **Parallel when possible**: Multiple agents can work simultaneously
+7. **Parallel when possible**: Multiple devstral2 instances can work simultaneously
 8. **Trust the process**: Evidence-based validation ensures quality
+9. **Small tasks**: Break work into 1-2 hour focused tasks
+10. **Centralized coordination**: All updates go to PROJECT.md or PROGRESS.md
+11. **No documentation litter**: Avoid creating new markdown files for coordination
 
 ---
 
