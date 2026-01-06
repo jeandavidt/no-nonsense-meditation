@@ -110,9 +110,9 @@ actor AudioService: AudioServiceProtocol {
         let session = AVAudioSession.sharedInstance()
 
         do {
-            // ALWAYS use .playback to ensure lockscreen controls and background audio work
-            // .mixWithOthers allows other harmless audio, but for meditation we want to be persistent
-            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            // Use .playback category to ensure lockscreen controls and background audio work
+            // NO .mixWithOthers - we need to be the primary audio app for Now Playing controls
+            try session.setCategory(.playback, mode: .default, options: [])
             try session.setActive(true)
         } catch {
             throw AudioError.playbackFailed(error)
@@ -347,26 +347,32 @@ actor AudioService: AudioServiceProtocol {
         nowPlayingInfo[MPMediaItemPropertyTitle] = title
         nowPlayingInfo[MPMediaItemPropertyArtist] = artist
         nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = playbackRate
-        
+
         if let duration = duration {
             nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = duration
         }
-        
+
         if let elapsed = elapsed {
             nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = elapsed
         }
-        
+
         if let image = UIImage(named: "AppIcon") {
             nowPlayingInfo[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { size in
                 return image
             }
         }
 
-        MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
+        // MPNowPlayingInfoCenter must be updated on main thread
+        Task { @MainActor in
+            MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
+        }
     }
 
     /// Clear lockscreen media info
     func clearNowPlayingInfo() {
-        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        // MPNowPlayingInfoCenter must be updated on main thread
+        Task { @MainActor in
+            MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        }
     }
 }

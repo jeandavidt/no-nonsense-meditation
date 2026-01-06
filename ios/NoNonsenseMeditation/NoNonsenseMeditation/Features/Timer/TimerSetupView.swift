@@ -17,11 +17,17 @@ struct TimerSetupView: View {
     /// ViewModel for timer state management
     @State private var viewModel = TimerViewModel()
 
-    /// Selected duration in minutes
-    @State private var selectedDuration: Int = 10
+    /// Selected duration in minutes (loaded from UserDefaults)
+    @State private var selectedDuration: Int = {
+        let savedDuration = UserDefaults.standard.integer(forKey: Constants.UserDefaultsKeys.defaultDuration)
+        return savedDuration == 0 ? Constants.Timer.defaultDuration : savedDuration
+    }()
 
-    /// Navigation state
+    /// Navigation state for meditation
     @State private var isActive = false
+
+    /// Navigation state for settings
+    @State private var showSettings = false
 
     /// Available duration options
     private let durationOptions = [1, 5, 10, 15, 20, 30, 45, 60, 90, 120]
@@ -33,47 +39,43 @@ struct TimerSetupView: View {
         return TimeInterval(selectedDuration * 60)
     }
 
-    /// Formatted duration string
-    private var formattedDuration: String {
-        if selectedDuration < 60 {
-            return "" + String(selectedDuration) + " minutes"
-        } else {
-            let hours = selectedDuration / 60
-            let minutes = selectedDuration % 60
-            if minutes == 0 {
-                return "" + String(hours) + " hour" + (hours > 1 ? "s" : "")
-            } else {
-                return "" + String(hours) + " hour" + (hours > 1 ? "s" : "") + " " + String(minutes) + " minutes"
-            }
-        }
-    }
-
     // MARK: - View Body
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    // Header
-                    headerSection
+            VStack(spacing: 24) {
+                // Header
+                headerSection
 
-                    // Duration Picker
-                    durationPickerSection
+                // Duration Picker
+                durationPickerSection
 
-                    // Background Sound Picker
+                // Background Sound Picker (scrollable)
+                ScrollView {
                     backgroundSoundSection
-
-                    // Start Button
-                    startButton
-
-                    Spacer()
                 }
-                .padding()
-                .navigationTitle("Setup Meditation")
-                .navigationBarTitleDisplayMode(.inline)
-                .navigationDestination(isPresented: $isActive) {
-                    ActiveMeditationView(viewModel: viewModel)
+
+                // Start Button
+                startButton
+            }
+            .padding()
+            .navigationTitle("Setup Meditation")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button(action: {
+                        showSettings = true
+                    }) {
+                        Image(systemName: "gearshape.fill")
+                            .foregroundColor(.accentColor)
+                    }
                 }
+            }
+            .navigationDestination(isPresented: $isActive) {
+                ActiveMeditationView(viewModel: viewModel)
+            }
+            .navigationDestination(isPresented: $showSettings) {
+                SettingsTabView()
             }
         }
     }
@@ -106,22 +108,31 @@ struct TimerSetupView: View {
 
     /// Duration picker section
     private var durationPickerSection: some View {
-        VStack(spacing: 16) {
-            // Duration display
-            Text(formattedDuration)
-                .font(.system(size: 48, weight: .bold))
-                .contentTransition(.numericText())
-                .id("duration-display")
-
-            // Picker
+        VStack(spacing: 8) {
+            // Picker with larger, more prominent text
             Picker("Duration", selection: $selectedDuration) {
                 ForEach(durationOptions, id: \.self) { minutes in
-                    Text("" + String(minutes) + " min")
-                        .tag(minutes)
+                    if minutes < 60 {
+                        Text("\(minutes) minutes")
+                            .font(.system(size: 32, weight: .semibold))
+                            .tag(minutes)
+                    } else {
+                        let hours = minutes / 60
+                        let remainingMins = minutes % 60
+                        if remainingMins == 0 {
+                            Text("\(hours) hour\(hours > 1 ? "s" : "")")
+                                .font(.system(size: 32, weight: .semibold))
+                                .tag(minutes)
+                        } else {
+                            Text("\(hours) hour\(hours > 1 ? "s" : "") \(remainingMins) min")
+                                .font(.system(size: 32, weight: .semibold))
+                                .tag(minutes)
+                        }
+                    }
                 }
             }
             .pickerStyle(.wheel)
-            .frame(height: 150)
+            .frame(height: 200)
             .clipped()
         }
     }

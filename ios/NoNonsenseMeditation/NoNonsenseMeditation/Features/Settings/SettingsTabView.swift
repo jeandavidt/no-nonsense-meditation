@@ -21,69 +21,67 @@ struct SettingsTabView: View {
     // MARK: - Body
 
     var body: some View {
-        NavigationStack {
-            List {
-                // Statistics Overview Section
-                statisticsSection
+        List {
+            // Statistics Overview Section
+            statisticsSection
 
-                // General Settings Section
-                generalSettingsSection
+            // General Settings Section
+            generalSettingsSection
 
-                // Audio Settings Section
-                audioSettingsSection
+            // Audio Settings Section
+            audioSettingsSection
 
-                // Notifications Section
-                notificationsSection
+            // Notifications Section
+            notificationsSection
 
-                // Health Integration Section
-                healthIntegrationSection
+            // Health Integration Section
+            healthIntegrationSection
 
-                // Data Management Section
-                dataManagementSection
+            // Data Management Section
+            dataManagementSection
 
-                // About Section
-                aboutSection
-            }
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.large)
-            .task {
-                await viewModel.loadStatistics()
-                await healthKitViewModel.checkAuthorizationStatus()
-            }
-            .confirmationDialog(
-                "Clear All Data",
-                isPresented: Binding(
-                    get: { viewModel.activeConfirmationDialog == .clearAllData },
-                    set: { if !$0 { viewModel.activeConfirmationDialog = nil } }
-                ),
-                titleVisibility: .visible
-            ) {
-                Button("Clear All Data", role: .destructive) {
-                    Task {
-                        await viewModel.clearAllData()
-                    }
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text("This will permanently delete all your meditation sessions. This action cannot be undone.")
-            }
-            .alert(
-                viewModel.activeAlert?.title ?? "",
-                isPresented: Binding(
-                    get: { viewModel.activeAlert != nil },
-                    set: { if !$0 { viewModel.activeAlert = nil } }
-                )
-            ) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                if let alert = viewModel.activeAlert {
-                    Text(alert.message)
+            // About Section
+            aboutSection
+        }
+        .navigationTitle("Settings")
+        .navigationBarTitleDisplayMode(.large)
+        .task {
+            await viewModel.loadStatistics()
+            await healthKitViewModel.checkAuthorizationStatus()
+        }
+        .confirmationDialog(
+            "Clear All Data",
+            isPresented: Binding(
+                get: { viewModel.activeConfirmationDialog == .clearAllData },
+                set: { if !$0 { viewModel.activeConfirmationDialog = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Clear All Data", role: .destructive) {
+                Task {
+                    await viewModel.clearAllData()
                 }
             }
-            .sheet(isPresented: $showShareSheet) {
-                if let url = exportedFileURL {
-                    ShareSheet(items: [url])
-                }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will permanently delete all your meditation sessions. This action cannot be undone.")
+        }
+        .alert(
+            viewModel.activeAlert?.title ?? "",
+            isPresented: Binding(
+                get: { viewModel.activeAlert != nil },
+                set: { if !$0 { viewModel.activeAlert = nil } }
+            )
+        ) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            if let alert = viewModel.activeAlert {
+                Text(alert.message)
+            }
+        }
+        .sheet(isPresented: $showShareSheet) {
+            if let url = exportedFileURL {
+                ShareSheet(items: [url])
             }
         }
     }
