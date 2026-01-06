@@ -63,6 +63,12 @@ struct SessionRecapView: View {
             .padding()
             .navigationTitle("Session Complete")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                // Belt and suspenders: ensure audio is stopped
+                if viewModel.isRunning {
+                    viewModel.stopTimer()
+                }
+            }
         }
     }
 
@@ -116,7 +122,7 @@ struct SessionRecapView: View {
                     .contentTransition(.numericText())
 
                 if statistics.durationDifference > 0 {
-                    Text("+" + statistics.formattedDurationDifference)
+                    Text(statistics.formattedDurationDifference)
                         .font(.caption)
                         .foregroundColor(.green)
                 } else if statistics.durationDifference < 0 {
@@ -191,21 +197,8 @@ struct SessionRecapView: View {
 
     /// Action buttons section
     private var actionButtonsSection: some View {
-        // Start new session button
-        Button(action: {
-            // Reset and start new session
-            viewModel.resetTimer()
-        }) {
-            HStack(spacing: 8) {
-                Image(systemName: "arrow.clockwise")
-                Text("Start New Session")
-            }
-            .font(.headline)
-            .frame(maxWidth: .infinity)
-            .padding()
-        }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
+        // Intentionally empty - users should use back button
+        EmptyView()
     }
 
     // MARK: - Helper Views

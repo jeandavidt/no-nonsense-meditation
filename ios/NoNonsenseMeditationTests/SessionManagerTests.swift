@@ -11,6 +11,9 @@ import CoreData
 
 /// Comprehensive unit tests for SessionManager actor
 /// Tests session lifecycle, persistence, and HealthKit integration
+/// Comprehensive unit tests for SessionManager actor
+/// Tests session lifecycle, persistence, and HealthKit integration
+@MainActor
 final class SessionManagerTests: XCTestCase {
 
     // MARK: - Properties
@@ -239,7 +242,7 @@ final class SessionManagerTests: XCTestCase {
         XCTAssertNotNil(completedSession, "Should create completed session")
         XCTAssertEqual(completedSession?.durationPlanned, 10, "Should convert seconds to minutes")
         XCTAssertEqual(
-            completedSession?.durationTotal,
+            completedSession?.durationTotal ?? 0,
             actualDuration / 60.0,
             accuracy: 0.1,
             "Should set actual duration"

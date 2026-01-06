@@ -8,10 +8,33 @@
 
 import Foundation
 import AVFoundation
+import MediaPlayer
+import UIKit
+/// Protocol for AudioService to enable mocking
+protocol AudioServiceProtocol: Actor {
+    func configureAudioSession(overrideSilent: Bool) async throws
+    func playBell(soundName: String) async throws
+    func playStartSound() async throws
+    func playPauseSound() async throws
+    func playResumeSound() async throws
+    func playCompletionSound()
+
+    func startBackgroundSound(_ sound: BackgroundSound) async throws
+    func pauseBackgroundSound()
+    func resumeBackgroundSound()
+    func stopBackgroundSound()
+
+    func previewBackgroundSound(_ sound: BackgroundSound, duration: TimeInterval) async throws
+    func stopPreview()
+
+    func setSilentModeOverride(_ override: Bool)
+
+    func updateNowPlayingInfo(title: String, artist: String, duration: TimeInterval?, elapsed: TimeInterval?, playbackRate: Float)
+}
 
 /// Actor responsible for playing meditation bell sounds and background audio
 /// Manages audio session configuration and sound playback
-actor AudioService {
+actor AudioService: AudioServiceProtocol {
 
     // MARK: - Types
 
@@ -47,6 +70,36 @@ actor AudioService {
     /// Preview player for sound selection
     private var previewPlayer: AVAudioPlayer?
 
+    // MARK: - Remote Control Callbacks
+
+    /// Callback for remote pause command from lockscreen
+    private var onRemotePauseRequested: (() async -> Void)?
+
+    /// Callback for remote play command from lockscreen
+    private var onRemotePlayRequested: (() async -> Void)?
+
+    /// Set the callbacks for remote control commands
+    func setRemoteCommandCallbacks(
+        onPause: @escaping () async -> Void,
+        onPlay: @escaping () async -> Void
+    ) {
+        self.onRemotePauseRequested = onPause
+        self.onRemotePlayRequested = onPlay
+    }
+
+    // MARK: - Singleton
+    
+    static let shared = AudioService()
+
+    // MARK: - Initialization
+
+    private init() {
+        // Setup lockscreen controls once on initialization
+        Task {
+            await setupRemoteTransportControls()
+        }
+    }
+
     // MARK: - Configuration
 
     /// Configure audio session settings
@@ -57,16 +110,9 @@ actor AudioService {
         let session = AVAudioSession.sharedInstance()
 
         do {
-            // Set category based on silent mode override preference
-            // Use .playback with .mixWithOthers to allow background sounds and bells simultaneously
-            if overrideSilent {
-                // Playback category plays even in silent mode
-                try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
-            } else {
-                // Ambient category respects silent mode and mixes with other audio
-                try session.setCategory(.ambient, mode: .default, options: [.mixWithOthers])
-            }
-
+            // ALWAYS use .playback to ensure lockscreen controls and background audio work
+            // .mixWithOthers allows other harmless audio, but for meditation we want to be persistent
+            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
             try session.setActive(true)
         } catch {
             throw AudioError.playbackFailed(error)
@@ -114,13 +160,13 @@ actor AudioService {
         // Stop any currently playing background sound
         stopBackgroundSound()
 
-        // If "none" is selected, just return
+        // If "none" is selected, just return without playing sound
         guard sound.requiresFile, let filename = sound.filename else {
             currentBackgroundSound = .none
             return
         }
 
-        // Configure audio session
+        // Configure audio session and ACTIVE it immediately before playing
         try await configureAudioSession(overrideSilent: overrideSilentMode)
 
         // Locate sound file in bundle
@@ -148,6 +194,7 @@ actor AudioService {
         backgroundPlayer?.stop()
         backgroundPlayer = nil
         currentBackgroundSound = .none
+        clearNowPlayingInfo()
     }
 
     /// Pause the currently playing background sound
@@ -258,5 +305,68 @@ actor AudioService {
         Task {
             try? await playBell(soundName: "meditation_completion")
         }
+    }
+    // MARK: - Lockscreen Controls
+
+    /// Configure lockscreen media controls
+    private func setupRemoteTransportControls() {
+        let commandCenter = MPRemoteCommandCenter.shared()
+
+        // Clear existing targets to prevent duplicates/leaks
+        commandCenter.playCommand.removeTarget(nil)
+        commandCenter.pauseCommand.removeTarget(nil)
+
+        // Enable Play command
+        commandCenter.playCommand.isEnabled = true
+        commandCenter.playCommand.addTarget { [weak self] event in
+            guard let self = self else { return .commandFailed }
+            Task {
+                await self.onRemotePlayRequested?()
+            }
+            return .success
+        }
+
+        // Enable Pause command
+        commandCenter.pauseCommand.isEnabled = true
+        commandCenter.pauseCommand.addTarget { [weak self] event in
+            guard let self = self else { return .commandFailed }
+            Task {
+                await self.onRemotePauseRequested?()
+            }
+            return .success
+        }
+    }
+
+    /// Update lockscreen media info
+    /// - Parameters:
+    ///   - title: Title to display
+    ///   - artist: Artist/Subtitle to display (default: "No Nonsense Meditation")
+    /// Update lockscreen media info
+    func updateNowPlayingInfo(title: String, artist: String = "No Nonsense Meditation", duration: TimeInterval? = nil, elapsed: TimeInterval? = nil, playbackRate: Float = 1.0) {
+        var nowPlayingInfo = [String: Any]()
+        nowPlayingInfo[MPMediaItemPropertyTitle] = title
+        nowPlayingInfo[MPMediaItemPropertyArtist] = artist
+        nowPlayingInfo[MPNowPlayingInfoPropertyPlaybackRate] = playbackRate
+        
+        if let duration = duration {
+            nowPlayingInfo[MPMediaItemPropertyPlaybackDuration] = duration
+        }
+        
+        if let elapsed = elapsed {
+            nowPlayingInfo[MPNowPlayingInfoPropertyElapsedPlaybackTime] = elapsed
+        }
+        
+        if let image = UIImage(named: "AppIcon") {
+            nowPlayingInfo[MPMediaItemPropertyArtwork] = MPMediaItemArtwork(boundsSize: image.size) { size in
+                return image
+            }
+        }
+
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nowPlayingInfo
+    }
+
+    /// Clear lockscreen media info
+    func clearNowPlayingInfo() {
+        MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     }
 }

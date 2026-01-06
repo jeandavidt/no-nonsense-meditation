@@ -16,7 +16,7 @@
 /// - The `container` property is immutable after initialization
 /// - NSPersistentCloudKitContainer is thread-safe
 /// - Static properties use `nonisolated(unsafe)` as they're initialized once and never mutated
-final class PersistenceController: Sendable {
+class PersistenceController: Sendable {
 
     // MARK: - Singleton Instance
 
@@ -75,7 +75,7 @@ final class PersistenceController: Sendable {
 
     /// Initialize the persistence controller
     /// - Parameter inMemory: Whether to use an in-memory store (for testing/previews)
-    private init(inMemory: Bool = false) {
+    init(inMemory: Bool = false) {
         container = NSPersistentCloudKitContainer(name: "NoNonsenseMeditation")
 
         if inMemory {

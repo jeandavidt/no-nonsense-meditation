@@ -97,6 +97,12 @@ actor MeditationTimerService {
 
     /// Stop the timer and mark as completed
     func stopTimer() {
+        // If we're running, capture the final elapsed segment
+        if state == .running, let startTime = startTime {
+            let sessionElapsed = Date().timeIntervalSince(startTime)
+            accumulatedTime += sessionElapsed
+        }
+        
         // Cancel countdown task
         timerTask?.cancel()
         timerTask = nil
@@ -136,7 +142,7 @@ actor MeditationTimerService {
             total += Date().timeIntervalSince(startTime)
         }
 
-        return min(total, totalDuration)
+        return total
     }
 
     /// Get current timer state
@@ -163,7 +169,7 @@ actor MeditationTimerService {
     private func startCountdown() {
         timerTask = Task { [weak self] in
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(1))
+                try? await Task.sleep(for: .seconds(0.1))
 
                 guard !Task.isCancelled else { break }
 
@@ -182,13 +188,14 @@ actor MeditationTimerService {
         self.elapsedTime = totalElapsed
 
         // Calculate remaining time
-        self.remainingTime = max(totalDuration - totalElapsed, 0)
-
-        // Check for completion
-        if remainingTime <= 0 {
-            self.state = .completed
-            timerTask?.cancel()
-            timerTask = nil
+        // Allow negative time for overtime
+        self.remainingTime = totalDuration - totalElapsed
+        
+        // Check for completion time (just passed zero) but DON'T stop automatically
+        // The ViewModel will handle the bell and UI updates
+        if remainingTime <= 0 && state != .completed {
+            // We just let it run. The ViewModel will observe remainingTime <= 0
+            // and trigger the bell, but we keep running until stopTimer() is called.
         }
     }
 }

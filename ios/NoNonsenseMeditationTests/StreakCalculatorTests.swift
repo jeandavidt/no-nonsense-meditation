@@ -20,20 +20,20 @@ final class StreakCalculatorTests: XCTestCase {
 
     // MARK: - Setup & Teardown
 
-    override func setUp() throws {
-        try super.setUp()
+    override func setUpWithError() throws {
+        try super.setUpWithError()
         calculator = StreakCalculator()
         mockPersistence = MockPersistenceController()
         mockPersistence.reset()
         calendar = Calendar.current
     }
 
-    override func tearDown() throws {
+    override func tearDownWithError() throws {
         calculator = nil
         mockPersistence.reset()
         mockPersistence = nil
         calendar = nil
-        try super.tearDown()
+        try super.tearDownWithError()
     }
 
     // MARK: - Helper Methods

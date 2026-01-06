@@ -8,9 +8,10 @@
 import XCTest
 @testable import NoNonsenseMeditation
 
+@MainActor
 final class SessionRecapViewTests: XCTestCase {
 
-    func testSessionRecapViewInitialization() throws {
+    func testSessionRecapViewInitialization() async throws {
         // Create a viewModel with a completed session
         let viewModel = TimerViewModel()
         viewModel.startTimer(duration: 300) // 5 minutes
@@ -25,6 +26,9 @@ final class SessionRecapViewTests: XCTestCase {
 
     func testSessionStatisticsCalculation() throws {
         // Test various session scenarios
+        // SessionStatistics is a struct, so this doesn't need MainActor isolation strictly,
+        // but being in @MainActor class is fine.
+        
         let testCases = [
             // (plannedDuration, actualDuration, wasPaused, expectedFocusPercentage)
             (300, 300, false, "100"),    // Perfect session
@@ -154,7 +158,9 @@ final class SessionRecapViewTests: XCTestCase {
         XCTAssertNotNil(recapView)
 
         // Statistics should be calculated correctly from viewModel properties
-        XCTAssertGreaterThan(viewModel.elapsedTime, 0)
-        XCTAssertLessThanOrEqual(viewModel.elapsedTime, 180)
+        // Capture values to avoid autoclosure isolation issues
+        let elapsed = viewModel.elapsedTime
+        XCTAssertGreaterThan(elapsed, 0)
+        XCTAssertLessThanOrEqual(elapsed, 180)
     }
 }

@@ -52,14 +52,6 @@ struct ActiveMeditationView: View {
                 .navigationDestination(isPresented: $showSessionRecap) {
                     SessionRecapView(viewModel: viewModel)
                 }
-                .alert("End Meditation Early?", isPresented: $showCancelConfirmation) {
-                    Button("Cancel", role: .cancel) {}
-                    Button("End Session", role: .destructive) {
-                        endMeditationEarly()
-                    }
-                } message: {
-                    Text("Are you sure you want to end this meditation session early?")
-                }
             }
         }
     }
@@ -88,9 +80,9 @@ struct ActiveMeditationView: View {
                     showCancelConfirmation = true
                 }) {
                     Image(systemName: "xmark.circle.fill")
-                        .resizable()
-                        .frame(width: 32, height: 32)
-                        .foregroundColor(.secondary)
+                    .resizable()
+                    .frame(width: 32, height: 32)
+                    .foregroundColor(.secondary)
                 }
             }
 
@@ -168,7 +160,7 @@ struct ActiveMeditationView: View {
 
                 // End session button
                 Button(action: {
-                    showCancelConfirmation = true
+                    endMeditationEarly()
                 }) {
                     Text("End Session")
                         .font(.headline)
@@ -178,13 +170,32 @@ struct ActiveMeditationView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.large)
                 .foregroundColor(.red)
-            } else if viewModel.isCompleted {
-                // Complete button
+            } else if viewModel.isRunning && viewModel.remainingTime <= 0 {
+                // Overtime State - "Finish Session" button
                 Button(action: {
+                    // Stop timer explicitly before showing recap
+                    // This creates the checkpoint and stops audio
+                    viewModel.stopTimer()
                     showSessionRecap = true
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "checkmark.circle.fill")
+                        Text("Finish Session")
+                    }
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .tint(.green) // distinct color to show completion
+            } else if viewModel.isCompleted {
+                // Complete button (fallback if already stopped)
+                Button(action: {
+                    showSessionRecap = true
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "chart.bar.fill")
                         Text("View Session Recap")
                     }
                     .font(.headline)

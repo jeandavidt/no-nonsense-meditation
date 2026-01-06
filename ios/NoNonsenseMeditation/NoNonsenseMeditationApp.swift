@@ -15,6 +15,9 @@ struct NoNonsenseMeditationApp: App {
         WindowGroup {
             ContentView()
                 .environment(\.managedObjectContext, persistenceController.viewContext)
+                .onAppear {
+                    UIApplication.shared.beginReceivingRemoteControlEvents()
+                }
         }
     }
 }

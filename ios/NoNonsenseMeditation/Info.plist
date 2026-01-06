@@ -6,6 +6,10 @@
 	<string>No Nonsense Meditation needs access to read your mindfulness data from the Health app.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>No Nonsense Meditation would like to save your meditation sessions as mindful minutes in the Health app to help you track your wellness journey.</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

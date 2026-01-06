@@ -10,7 +10,8 @@ import CoreData
 
 /// Actor responsible for managing meditation session lifecycle
 /// Handles creation, persistence, and state management of meditation sessions
-actor SessionManager {
+@MainActor
+final class SessionManager {
 
     // MARK: - Properties
 

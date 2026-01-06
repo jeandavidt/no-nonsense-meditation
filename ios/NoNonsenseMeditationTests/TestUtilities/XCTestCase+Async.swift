@@ -22,7 +22,7 @@ extension XCTestCase {
     ) async throws {
         let startTime = Date()
 
-        while !await condition() {
+        while !(await condition()) {
             if Date().timeIntervalSince(startTime) > timeout {
                 XCTFail("\(description) did not become true within \(timeout) seconds")
                 return

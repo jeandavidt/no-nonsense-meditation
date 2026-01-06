@@ -31,31 +31,36 @@ class TimerViewModel {
     /// Current timer state
     private(set) var state: TimerState = .idle
 
+    /// Total duration of the session in seconds
+    private(set) var totalDuration: TimeInterval = 0
+
     /// Remaining time in seconds
     private(set) var remainingTime: TimeInterval = 0
 
-    /// Total planned duration in seconds
-    private(set) var totalDuration: TimeInterval = 0
-
-    /// Time elapsed in current session (including pauses)
+    /// Elapsed time in seconds
     private(set) var elapsedTime: TimeInterval = 0
 
-    /// Current progress as a value between 0 and 1
-    private(set) var progress: Double = 0
+    /// Progress from 0.0 to 1.0 for UI progress rings
+    private(set) var progress: Double = 0.0
 
-    /// Formatted remaining time string for display
+    /// Formatted time string (MM:SS)
     private(set) var formattedTime: String = "00:00"
 
-    /// Selected background sound for the meditation session
+    /// Selected background sound
     private(set) var selectedBackgroundSound: BackgroundSound = .none
+    
+    /// Whether the completion sound has been played for the current session
+    private var hasPlayedCompletionSound = false
 
-    /// Timer service for countdown logic
+    // MARK: - Dependencies
+
+    /// Timer service for handling countdown logic
     private let timerService = MeditationTimerService()
 
-    /// Audio service for bell sounds
-    private let audioService = AudioService()
+    /// Audio service for sound playback
+    private let audioService: AudioServiceProtocol
 
-    /// Notification service for background notifications
+    /// Notification service for local notifications
     private let notificationService = NotificationService()
 
     /// Session manager for session lifecycle
@@ -66,9 +71,11 @@ class TimerViewModel {
 
     // MARK: - Initialization
 
-    init() {
+    init(audioService: AudioServiceProtocol = AudioService.shared) {
+        self.audioService = audioService
         setupSubscriptions()
         loadBackgroundSoundPreference()
+        setupRemoteCommandCallbacks()
     }
 
     // MARK: - Public Methods
@@ -95,13 +102,16 @@ class TimerViewModel {
             }
 
             // Play start sound
-            await audioService.playStartSound()
+            try? await audioService.playStartSound()
 
             // Schedule completion notification
             await notificationService.scheduleCompletionNotification(for: duration)
 
             // Update state
             self.state = .running
+
+            // Update lockscreen info
+            await updateLockscreenInfo()
         }
     }
 
@@ -117,13 +127,16 @@ class TimerViewModel {
             await audioService.pauseBackgroundSound()
 
             // Play pause sound
-            await audioService.playPauseSound()
+            try? await audioService.playPauseSound()
 
             // Cancel completion notification
             await notificationService.cancelCompletionNotification()
 
             // Update state
             self.state = .paused
+
+            // Update lockscreen info
+            await updateLockscreenInfo()
         }
     }
 
@@ -143,10 +156,13 @@ class TimerViewModel {
             await audioService.resumeBackgroundSound()
 
             // Play resume sound
-            await audioService.playResumeSound()
+            try? await audioService.playResumeSound()
 
             // Update state
             self.state = .running
+
+            // Update lockscreen info
+            await updateLockscreenInfo()
         }
     }
 
@@ -175,6 +191,15 @@ class TimerViewModel {
 
             // Update state
             self.state = .completed
+
+            // Update lockscreen info for completion
+            await audioService.updateNowPlayingInfo(
+                title: "Meditation Complete",
+                artist: "No Nonsense Meditation",
+                duration: nil,
+                elapsed: nil,
+                playbackRate: 0
+            )
         }
     }
 
@@ -199,8 +224,8 @@ class TimerViewModel {
 
     /// Set up subscriptions to timer service updates
     private func setupSubscriptions() {
-        // Create a timer that updates the UI every second
-        Timer.publish(every: 1.0, on: .main, in: .common)
+        // Create a timer that updates the UI every 0.1 second
+        Timer.publish(every: 0.1, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
                 Task {
@@ -223,6 +248,21 @@ class TimerViewModel {
         self.elapsedTime = elapsedTime
         self.progress = progress
         self.formattedTime = formatTime(remainingTime)
+
+        // Update lockscreen with current progress
+        if state == .running || state == .paused {
+            await updateLockscreenInfo()
+        }
+
+        // Check for completion (overtime start)
+        // If we hit 0 or go negative, and haven't played sound yet, play it.
+        // But we DO NOT stop the background sound here.
+        if remainingTime <= 0 && !hasPlayedCompletionSound && state == .running {
+            hasPlayedCompletionSound = true
+            await audioService.playCompletionSound()
+            // We do NOT call stopBackgroundSound() here anymore.
+            // It continues until user explicitly stops it.
+        }
     }
 
     /// Map timer service state to view model state
@@ -240,10 +280,19 @@ class TimerViewModel {
     }
 
     /// Format time interval as MM:SS string
+    /// Format time interval as MM:SS string (handles negative for overtime)
     private func formatTime(_ timeInterval: TimeInterval) -> String {
-        let minutes = Int(timeInterval) / 60
-        let seconds = Int(timeInterval) % 60
-        return String(format: "%02d:%02d", minutes, seconds)
+        let absTime = abs(timeInterval)
+        let minutes = Int(absTime) / 60
+        let seconds = Int(absTime) % 60
+        
+        let timeString = String(format: "%02d:%02d", minutes, seconds)
+        
+        if timeInterval < 0 {
+            return "+\(timeString)"
+        } else {
+            return timeString
+        }
     }
 
     // MARK: - Convenience Methods
@@ -292,11 +341,46 @@ class TimerViewModel {
         self.selectedBackgroundSound = BackgroundSound.loadFromUserDefaults()
     }
 
+    /// Set up remote command callbacks for lockscreen controls
+    private func setupRemoteCommandCallbacks() {
+        guard let audioService = audioService as? AudioService else { return }
+
+        Task {
+            await audioService.setRemoteCommandCallbacks(
+                onPause: { [weak self] in
+                    await MainActor.run {
+                        self?.pauseTimer()
+                    }
+                },
+                onPlay: { [weak self] in
+                    await MainActor.run {
+                        self?.resumeTimer()
+                    }
+                }
+            )
+        }
+    }
+
+    /// Update lockscreen media player info with current meditation state
+    private func updateLockscreenInfo() async {
+        let meditationTitle = "Meditation Session"
+        let meditationArtist = "No Nonsense Meditation"
+        let rate: Float = state == .paused ? 0.0 : 1.0
+
+        await audioService.updateNowPlayingInfo(
+            title: meditationTitle,
+            artist: meditationArtist,
+            duration: totalDuration,
+            elapsed: elapsedTime,
+            playbackRate: rate
+        )
+    }
+
     /// Preview a background sound
     /// - Parameter sound: The sound to preview
     func previewBackgroundSound(_ sound: BackgroundSound) {
         Task {
-            try? await audioService.stopPreview()
+            await audioService.stopPreview()
             try? await audioService.previewBackgroundSound(sound, duration: 3.0)
         }
     }
@@ -304,7 +388,7 @@ class TimerViewModel {
     /// Stop any preview playback
     func stopPreview() {
         Task {
-            try? await audioService.stopPreview()
+            await audioService.stopPreview()
         }
     }
 }

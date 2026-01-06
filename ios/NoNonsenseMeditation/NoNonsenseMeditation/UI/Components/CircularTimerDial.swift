@@ -62,9 +62,16 @@ struct CircularTimerDial: View {
 
     /// Formatted remaining time
     private var formattedTime: String {
-        let minutes = Int(remainingTime) / 60
-        let seconds = Int(remainingTime) % 60
-        return String(format: "%02d:%02d", minutes, seconds)
+        let absTime = abs(remainingTime)
+        let minutes = Int(absTime) / 60
+        let seconds = Int(absTime) % 60
+        let timeString = String(format: "%02d:%02d", minutes, seconds)
+        
+        if remainingTime < 0 {
+            return "+\(timeString)"
+        } else {
+            return timeString
+        }
     }
 
     /// Progress percentage

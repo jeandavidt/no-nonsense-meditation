@@ -25,6 +25,9 @@ All subagents must maintain `checkpoint.json` using this structure:
 * **Quality Gates:** Never mark a task "Complete" until `PROGRESS.md` reflects the evidence-based proof of the subagent's work.
 * **Parallel Coordination:** When running multiple instances, use the `agent_name` to prevent filename collisions in the `./checkpoints/` directory.
 
+## 5. Heartbeat Monitoring
+Every 5 iterations, the Coordinator must run ./agent_status.sh. If an agent is marked as STALE (except the coordinator itself), the Coordinator must read that agent's trace.log, summarize the failure, and relaunch a new agent using the existing checkpoint.json.
+
 ## 5. Reporting Constraints
 - **Source of Truth:** `PROGRESS.md` is the master ledger.
 - **No Litter:** Keep all coordination within `PROJECT.md`, `PROGRESS.md`, or the specific `./checkpoints/` folder.

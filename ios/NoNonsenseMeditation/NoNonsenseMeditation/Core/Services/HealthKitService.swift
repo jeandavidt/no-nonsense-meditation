@@ -8,6 +8,38 @@
 import Foundation
 import HealthKit
 
+// MARK: - Protocol Definition
+
+/// Protocol abstraction for HKHealthStore to enable testing
+protocol HealthStoreProtocol: Sendable {
+    func authorizationStatus(for type: HKObjectType) -> HKAuthorizationStatus
+    func requestAuthorization(toShare typesToShare: Set<HKSampleType>?, read typesToRead: Set<HKObjectType>?) async throws
+    func save(_ object: HKObject) async throws
+    func save(_ objects: [HKObject]) async throws
+}
+
+// Wrapper to bridge HKHealthStore to HealthStoreProtocol
+// This avoids issues with implicit protocol conformance of system classes
+struct HKHealthStoreWrapper: HealthStoreProtocol {
+    let store: HKHealthStore
+
+    func authorizationStatus(for type: HKObjectType) -> HKAuthorizationStatus {
+        return store.authorizationStatus(for: type)
+    }
+
+    func requestAuthorization(toShare typesToShare: Set<HKSampleType>?, read typesToRead: Set<HKObjectType>?) async throws {
+        try await store.requestAuthorization(toShare: typesToShare ?? [], read: typesToRead ?? [])
+    }
+
+    func save(_ object: HKObject) async throws {
+        try await store.save(object)
+    }
+
+    func save(_ objects: [HKObject]) async throws {
+        try await store.save(objects)
+    }
+}
+
 /// Actor responsible for HealthKit integration
 /// Manages authorization and syncing of mindful minutes to Apple Health
 actor HealthKitService {
@@ -42,15 +74,18 @@ actor HealthKitService {
 
     // MARK: - Properties
 
-    private let healthStore: HKHealthStore?
+    private let healthStore: HealthStoreProtocol?
     private let mindfulSessionType = HKCategoryType(.mindfulSession)
 
     // MARK: - Initialization
 
-    init() {
-        // HealthKit is only available on iOS devices (not simulators in some cases)
-        if HKHealthStore.isHealthDataAvailable() {
-            self.healthStore = HKHealthStore()
+    /// Initialize HealthKitService
+    /// - Parameter store: Optional HealthStoreProtocol injection for testing. If nil, uses default HKHealthStore if available.
+    init(store: HealthStoreProtocol? = nil) {
+        if let store = store {
+            self.healthStore = store
+        } else if HKHealthStore.isHealthDataAvailable() {
+            self.healthStore = HKHealthStoreWrapper(store: HKHealthStore())
         } else {
             self.healthStore = nil
         }

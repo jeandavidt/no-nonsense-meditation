@@ -9,40 +9,16 @@ import CoreData
 @testable import NoNonsenseMeditation
 
 /// Mock persistence controller for testing
-/// Uses in-memory store to avoid affecting real data
-class MockPersistenceController {
+/// Inherits from PersistenceController to allow injection
+class MockPersistenceController: PersistenceController {
 
-    static let shared = MockPersistenceController()
-
-    let container: NSPersistentContainer
-
-    var viewContext: NSManagedObjectContext {
-        return container.viewContext
+    init() {
+        super.init(inMemory: true)
     }
-
-    init(inMemory: Bool = true) {
-        container = NSPersistentContainer(name: "NoNonsenseMeditation")
-
-        if inMemory {
-            let description = NSPersistentStoreDescription()
-            description.type = NSInMemoryStoreType
-            container.persistentStoreDescriptions = [description]
-        }
-
-        container.loadPersistentStores { description, error in
-            if let error = error {
-                fatalError("Failed to load mock store: \(error)")
-            }
-        }
-
-        viewContext.automaticallyMergesChangesFromParent = true
-    }
-
-    func saveContext() throws {
-        guard viewContext.hasChanges else { return }
-        try viewContext.save()
-    }
-
+    
+    // The parent class already has container and viewContext properties
+    
+    // Helper method to reset the store (delete all data)
     func reset() {
         let fetchRequest: NSFetchRequest<NSFetchRequestResult> = NSFetchRequest(entityName: "MeditationSession")
         let deleteRequest = NSBatchDeleteRequest(fetchRequest: fetchRequest)
@@ -62,6 +38,7 @@ class MockPersistenceController {
         createdAt: Date = Date(),
         wasPaused: Bool = false
     ) -> MeditationSession {
+        // Must run on main context
         let session = MeditationSession(context: viewContext)
         session.idSession = UUID()
         session.durationPlanned = durationPlanned
