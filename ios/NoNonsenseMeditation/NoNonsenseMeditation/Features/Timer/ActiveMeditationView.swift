@@ -130,6 +130,8 @@ struct ActiveMeditationView: View {
             if viewModel.isRunning {
                 // Pause button
                 Button(action: {
+                    let impact = UIImpactFeedbackGenerator(style: .light)
+                    impact.impactOccurred()
                     viewModel.pauseTimer()
                 }) {
                     HStack(spacing: 8) {
@@ -143,6 +145,8 @@ struct ActiveMeditationView: View {
             } else if viewModel.isPaused {
                 // Resume button
                 Button(action: {
+                    let impact = UIImpactFeedbackGenerator(style: .medium)
+                    impact.impactOccurred()
                     viewModel.resumeTimer()
                 }) {
                     HStack(spacing: 8) {
@@ -156,6 +160,8 @@ struct ActiveMeditationView: View {
 
                 // End session button
                 Button(action: {
+                    let impact = UIImpactFeedbackGenerator(style: .light)
+                    impact.impactOccurred()
                     endMeditationEarly()
                 }) {
                     Text("End Session")
@@ -167,6 +173,8 @@ struct ActiveMeditationView: View {
             } else if viewModel.isRunning && viewModel.remainingTime <= 0 {
                 // Overtime State - "Finish Session" button
                 Button(action: {
+                    let success = UINotificationFeedbackGenerator()
+                    success.notificationOccurred(.success)
                     // Stop timer explicitly before showing recap
                     // This creates the checkpoint and stops audio
                     viewModel.stopTimer()
@@ -184,6 +192,8 @@ struct ActiveMeditationView: View {
             } else if viewModel.isCompleted {
                 // Complete button (fallback if already stopped)
                 Button(action: {
+                    let impact = UIImpactFeedbackGenerator(style: .light)
+                    impact.impactOccurred()
                     showSessionRecap = true
                 }) {
                     HStack(spacing: 8) {

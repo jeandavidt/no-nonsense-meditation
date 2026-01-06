@@ -43,25 +43,23 @@ struct TimerSetupView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
-                    // Header
-                    headerSection
-                        .padding(.bottom, 20)
+            VStack(spacing: 0) {
+                // Header
+                headerSection
+                    .padding(.bottom, 20)
 
-                    // Duration Picker
-                    durationPickerSection
-                        .padding(.bottom, 24)
+                // Duration Picker (scrollable)
+                durationPickerSection
+                    .padding(.bottom, 24)
 
-                    // Background Sound Picker
-                    backgroundSoundSection
-                        .padding(.bottom, 32)
+                // Background Sound Picker (scrollable section)
+                backgroundSoundSection
+                    .padding(.bottom, 32)
 
-                    // Start Button
-                    startButtonSection
-                }
-                .padding()
+                // Start Button (always visible)
+                startButtonSection
             }
+            .padding()
             .navigationTitle("Setup Meditation")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -146,16 +144,19 @@ struct TimerSetupView: View {
                 .font(.headline)
                 .padding(.horizontal, 4)
 
-            VStack(spacing: 0) {
-                ForEach(BackgroundSound.allCases) { sound in
-                    backgroundSoundRow(for: sound)
+            ScrollView {
+                VStack(spacing: 0) {
+                    ForEach(BackgroundSound.allCases) { sound in
+                        backgroundSoundRow(for: sound)
 
-                    if sound != BackgroundSound.allCases.last {
-                        Divider()
-                            .padding(.leading, 60)
+                        if sound != BackgroundSound.allCases.last {
+                            Divider()
+                                .padding(.leading, 60)
+                        }
                     }
                 }
             }
+            .frame(maxHeight: 200)
             .padding(.vertical, 4)
             .background(Color(.systemGray6))
             .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -222,6 +223,10 @@ struct TimerSetupView: View {
 
     /// Select a background sound
     private func selectBackgroundSound(_ sound: BackgroundSound) {
+        // Haptic feedback
+        let impact = UIImpactFeedbackGenerator(style: .light)
+        impact.impactOccurred()
+
         viewModel.setBackgroundSound(sound)
 
         // Play preview if not "none"
@@ -236,6 +241,10 @@ struct TimerSetupView: View {
     private func startMeditation() {
         // Validate duration
         guard selectedDuration > 0 else { return }
+
+        // Haptic feedback
+        let impact = UIImpactFeedbackGenerator(style: .medium)
+        impact.impactOccurred()
 
         // Stop any preview playback
         viewModel.stopPreview()
