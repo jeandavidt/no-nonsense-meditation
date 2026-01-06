@@ -43,22 +43,25 @@ struct TimerSetupView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                // Header
-                headerSection
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Header
+                    headerSection
+                        .padding(.bottom, 20)
 
-                // Duration Picker
-                durationPickerSection
+                    // Duration Picker
+                    durationPickerSection
+                        .padding(.bottom, 24)
 
-                // Background Sound Picker (scrollable)
-                ScrollView {
+                    // Background Sound Picker
                     backgroundSoundSection
-                }
+                        .padding(.bottom, 32)
 
-                // Start Button
-                startButton
+                    // Start Button
+                    startButtonSection
+                }
+                .padding()
             }
-            .padding()
             .navigationTitle("Setup Meditation")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -84,56 +87,55 @@ struct TimerSetupView: View {
 
     /// Header section with app icon and title
     private var headerSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             Image(systemName: "leaf.fill")
                 .resizable()
                 .scaledToFit()
-                .frame(width: 60, height: 60)
+                .frame(width: 40, height: 40)
                 .foregroundColor(.accentColor)
-                .padding(12)
+                .padding(10)
                 .background(Color.accentColor.opacity(0.1))
                 .clipShape(Circle())
 
             Text("No Nonsense Meditation")
-                .font(.title)
+                .font(.title3)
                 .fontWeight(.bold)
                 .multilineTextAlignment(.center)
-
-            Text("Set your meditation duration")
-                .font(.subheadline)
-                .foregroundColor(.secondary)
         }
-        .padding(.top, 16)
+        .padding(.top, 8)
     }
 
     /// Duration picker section
     private var durationPickerSection: some View {
-        VStack(spacing: 8) {
-            // Picker with larger, more prominent text
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Duration")
+                .font(.headline)
+                .padding(.horizontal, 4)
+
             Picker("Duration", selection: $selectedDuration) {
                 ForEach(durationOptions, id: \.self) { minutes in
                     if minutes < 60 {
                         Text("\(minutes) minutes")
-                            .font(.system(size: 32, weight: .semibold))
                             .tag(minutes)
                     } else {
                         let hours = minutes / 60
                         let remainingMins = minutes % 60
                         if remainingMins == 0 {
                             Text("\(hours) hour\(hours > 1 ? "s" : "")")
-                                .font(.system(size: 32, weight: .semibold))
                                 .tag(minutes)
                         } else {
                             Text("\(hours) hour\(hours > 1 ? "s" : "") \(remainingMins) min")
-                                .font(.system(size: 32, weight: .semibold))
                                 .tag(minutes)
                         }
                     }
                 }
             }
             .pickerStyle(.wheel)
-            .frame(height: 200)
+            .frame(height: 150)
             .clipped()
+            .padding(.vertical, 8)
+            .background(Color(.systemGray6))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }
 
@@ -142,7 +144,7 @@ struct TimerSetupView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Background Sound")
                 .font(.headline)
-                .padding(.horizontal)
+                .padding(.horizontal, 4)
 
             VStack(spacing: 0) {
                 ForEach(BackgroundSound.allCases) { sound in
@@ -154,12 +156,9 @@ struct TimerSetupView: View {
                     }
                 }
             }
-            .background(Color(.systemBackground))
+            .padding(.vertical, 4)
+            .background(Color(.systemGray6))
             .clipShape(RoundedRectangle(cornerRadius: 12))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color(.systemGray5), lineWidth: 1)
-            )
         }
     }
 
@@ -201,19 +200,22 @@ struct TimerSetupView: View {
         .buttonStyle(.plain)
     }
 
-    /// Start button
-    private var startButton: some View {
-        Button(action: {
-            startMeditation()
-        }) {
-            Text("Start Meditation")
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .padding()
+    /// Start button section with enhanced visual separation
+    private var startButtonSection: some View {
+        VStack(spacing: 0) {
+            Button(action: {
+                startMeditation()
+            }) {
+                Text("Start Meditation")
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .disabled(selectedDuration <= 0)
         }
-        .buttonStyle(.borderedProminent)
-        .controlSize(.large)
-        .disabled(selectedDuration <= 0)
+        .padding(.top, 8)
     }
 
     // MARK: - Methods
