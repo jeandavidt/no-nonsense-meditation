@@ -12,13 +12,13 @@
 
 ## Project State
 
-### Overall Progress: 55%
+### Overall Progress: 60%
 
 ```
-[■■■■■■■■■■■░░░░░░░░░░░] 55% Complete
+[■■■■■■■■■■■■░░░░░░░░░░] 60% Complete
 
 Phase 1: Setup & Infrastructure    [■■■■■] 100%
-Phase 2: Core Features              [■■■■■] 85%
+Phase 2: Core Features              [■■■■■] 95%
 Phase 3: Testing & QA               [░░░░░] 0%
 Phase 4: Polish & Deployment        [░░░░░] 0%
 ```
@@ -41,7 +41,7 @@ Phase 4: Polish & Deployment        [░░░░░] 0%
 
 ---
 
-### Phase 2: Core Features (85%)
+### Phase 2: Core Features (95%)
 **Status**: 🟡 In Progress | **Owner**: devstral2 (Swift/iOS Development) + devstral2 (Backend Architecture)
 
 #### 2.1: Timer Core (100%)
@@ -65,12 +65,12 @@ Phase 4: Polish & Deployment        [░░░░░] 0%
 - [x] Add session statistics queries
 - [x] Implement data migration strategy
 
-#### 2.4: HealthKit Integration (0%)
-- [ ] Build HealthKitService actor
-- [ ] Implement authorization flow
-- [ ] Add mindful minutes sync on session completion
-- [ ] Handle authorization denied state
-- [ ] Create deep link to Settings
+#### 2.4: HealthKit Integration (100%)
+- [x] Build HealthKitService actor
+- [x] Implement authorization flow
+- [x] Add mindful minutes sync on session completion
+- [x] Handle authorization denied state
+- [x] Create deep link to Settings
 
 #### 2.5: Settings & Stats (0%)
 - [ ] Build SettingsViewModel

@@ -113,7 +113,7 @@ N/A (no agents used this session - manual setup)
 ## Session 2: 2026-01-05 - Timer Core Implementation
 
 **Duration**: 2 hours
-**Phase**: Phase 2 - Core Features (Timer UI)
+**Phase**: Phase 2 - Core Features (Timer UI + HealthKit)
 **Status**: 🟢 Complete
 
 ### Goals
@@ -125,6 +125,7 @@ N/A (no agents used this session - manual setup)
 - [x] Update SessionStatistics model for session-specific data
 - [x] Add convenience methods to AudioService and NotificationService
 - [x] Update SessionManager with completeSession method
+- [x] Implement complete HealthKit integration
 
 ### Agents Used
 - **swift-expert (Swift/iOS Development)**: Implemented all timer UI components and ViewModel
@@ -210,6 +211,20 @@ N/A (no agents used this session - manual setup)
   - AudioService: playStartSound(), playPauseSound(), playResumeSound(), playCompletionSound()
   - NotificationService: scheduleCompletionNotification(), cancelCompletionNotification()
   - SessionManager: completeSession() method for standalone session completion
+
+#### 8. Implemented HealthKit Integration ✅
+- **Description**: Complete HealthKit integration for mindful minutes tracking
+- **Agent**: swift-expert (Backend Architecture)
+- **Evidence**: [HealthKitService.swift](ios/NoNonsenseMeditation/NoNonsenseMeditation/Core/Services/HealthKitService.swift), [HealthKitViewModel.swift](ios/NoNonsenseMeditation/NoNonsenseMeditation/Core/ViewModels/HealthKitViewModel.swift)
+- **Key Features**:
+  - HealthKitService actor with authorization and syncing
+  - Authorization flow with status checking
+  - Mindful minutes sync on session completion
+  - Batch save for multiple sessions
+  - HealthKitViewModel for UI integration
+  - Permission views and settings integration
+  - Deep link to iOS Settings app
+  - SessionManager integration for automatic syncing
 
 ### Evidence Links
 - [TimerViewModel.swift](ios/NoNonsenseMeditation/NoNonsenseMeditation/Core/ViewModels/TimerViewModel.swift)
@@ -489,7 +504,7 @@ None encountered
 | Session | Date | Phase | Tasks Completed | Status | Key Achievements |
 |---------|------|-------|-----------------|--------|------------------|
 | 1 | 2026-01-05 | Phase 0 | 6/6 | 🟢 | Workflow infrastructure created |
-| 2 | 2026-01-05 | Phase 2 | 7/7 | 🟢 | Timer UI fully implemented |
+| 2 | 2026-01-05 | Phase 2 | 8/8 | 🟢 | Timer UI + HealthKit fully implemented |
 | 3 | 2026-01-06 | Phase 2 | 5/5 | 🟢 | Concurrency fixed, build successful |
 | 4 | 2026-01-06 | Phase 2 | 6/6 | 🟢 | Background sounds feature complete |
 
@@ -522,6 +537,7 @@ All evidence (screenshots, test results, logs, etc.) must be stored in the **evi
 - ✅ SessionRecapView created
 - ✅ SessionStatistics model enhanced
 - ✅ Service layer updated
+- ✅ HealthKit integration complete (HealthKitService, HealthKitViewModel, UI views)
 
 ### Session 3
 - ✅ Concurrency warnings fixed (40+ → 5)
