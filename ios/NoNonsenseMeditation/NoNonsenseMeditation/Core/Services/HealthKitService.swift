@@ -134,22 +134,23 @@ actor HealthKitService {
 
     /// Save a meditation session to HealthKit as mindful minutes
     /// - Parameters:
-    ///   - duration: Duration in minutes
     ///   - startDate: When the session started
     ///   - endDate: When the session ended
     /// - Throws: HealthKitError if sync fails
     func saveMindfulMinutes(
-        duration: TimeInterval,
         startDate: Date,
         endDate: Date
     ) async throws {
         guard let healthStore = healthStore else {
+            print("[HealthKit] HealthKit not available on this device")
             throw HealthKitError.notAvailable
         }
 
         // Verify authorization
         let status = checkAuthorizationStatus()
+        print("[HealthKit] Authorization status: \(status)")
         guard status == .authorized else {
+            print("[HealthKit] Sync blocked - authorization status: \(status)")
             throw HealthKitError.authorizationDenied
         }
 
@@ -164,24 +165,31 @@ actor HealthKitService {
         // Save to HealthKit
         do {
             try await healthStore.save(sample)
+            let duration = endDate.timeIntervalSince(startDate) / 60.0
+            print("[HealthKit] Successfully saved mindful session: \(startDate) to \(endDate) (duration: \(String(format: "%.1f", duration)) minutes)")
         } catch {
+            print("[HealthKit] Failed to save sample: \(error)")
+            print("[HealthKit] Current authorization status: \(checkAuthorizationStatus())")
             throw HealthKitError.syncFailed(error)
         }
     }
 
     /// Batch save multiple meditation sessions to HealthKit
-    /// - Parameter sessions: Array of tuples (duration, startDate, endDate)
+    /// - Parameter sessions: Array of tuples (startDate, endDate)
     /// - Throws: HealthKitError if sync fails
     func batchSaveMindfulMinutes(
-        sessions: [(duration: TimeInterval, startDate: Date, endDate: Date)]
+        sessions: [(startDate: Date, endDate: Date)]
     ) async throws {
         guard let healthStore = healthStore else {
+            print("[HealthKit] HealthKit not available on this device")
             throw HealthKitError.notAvailable
         }
 
         // Verify authorization
         let status = checkAuthorizationStatus()
+        print("[HealthKit] Batch save authorization status: \(status)")
         guard status == .authorized else {
+            print("[HealthKit] Batch sync blocked - authorization status: \(status)")
             throw HealthKitError.authorizationDenied
         }
 
@@ -198,7 +206,10 @@ actor HealthKitService {
         // Batch save
         do {
             try await healthStore.save(samples)
+            print("[HealthKit] Successfully batch saved \(samples.count) mindful session(s)")
         } catch {
+            print("[HealthKit] Failed to batch save samples: \(error)")
+            print("[HealthKit] Current authorization status: \(checkAuthorizationStatus())")
             throw HealthKitError.syncFailed(error)
         }
     }
