@@ -1,6 +1,0 @@
-Command line invocation:
-    /Applications/Xcode.app/Contents/Developer/usr/bin/xcodebuild -scheme NoNonsenseMeditation -destination "platform=iOS Simulator,name=iPhone 15" clean build
-
-2026-01-06 08:35:55.735 xcodebuild[73533:3702141] Writing error result bundle to /var/folders/5l/1tzhgnt576b5pxh92gf8jbg80000gn/T/ResultBundle_2026-06-01_08-35-0055.xcresult
-xcodebuild: error: The directory /Users/jeandavidt/Developer/jeandavidt/no-nonsense-meditation/ios/NoNonsenseMeditation does not contain an Xcode project, workspace or package.
-
