@@ -29,11 +29,17 @@ targets:
       - path: NoNonsenseMeditation
         name: NoNonsenseMeditation
         excludes:
-          - "*.md"
+          - "**/*.md"
+          - "**/.venv"
+          - "**/__pycache__"
+          - "**/*.pyc"
+          - "**/*.pyo"
+          - "**/*.egg-info"
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.jeandavidt.NoNonsenseMeditation
         CODE_SIGN_STYLE: Automatic
+        DEVELOPMENT_TEAM: S65RLZRGD2
         DEVELOPMENT_ASSET_PATHS: "\"NoNonsenseMeditation/Preview Content\""
         ENABLE_PREVIEWS: YES
         GENERATE_INFOPLIST_FILE: YES
@@ -44,8 +50,9 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown"
         INFOPLIST_KEY_NSHealthShareUsageDescription: "NoNonsenseMeditation needs access to read your mindful minutes to track your meditation progress and provide insights."
         INFOPLIST_KEY_NSHealthUpdateUsageDescription: "NoNonsenseMeditation needs access to write mindful minutes to HealthKit to record your meditation sessions."
+        INFOPLIST_KEY_NSAppIntentsPackage: com.jeandavidt.NoNonsenseMeditation
         INFOPLIST_KEY_UIBackgroundModes: "fetch remote-notification"
-        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_APPICON_NAME: NoNonsense
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         CODE_SIGN_ENTITLEMENTS: NoNonsenseMeditation/NoNonsenseMeditation.entitlements
         SWIFT_EMIT_LOC_STRINGS: YES
@@ -53,6 +60,8 @@ targets:
       - framework: System/Library/Frameworks/HealthKit.framework
         embed: false
       - framework: System/Library/Frameworks/CloudKit.framework
+        embed: false
+      - framework: System/Library/Frameworks/AppIntents.framework
         embed: false
     scheme:
       testTargets:

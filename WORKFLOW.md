@@ -20,7 +20,7 @@ This project uses an **autonomous multi-agent orchestration system** where speci
 
 ### Orchestration Layer
 
-#### Studio Producer (devstral2)
+#### Studio Producer 
 - **Role**: High-level project orchestration and resource allocation
 - **Responsibilities**:
   - Monitor overall project health across sessions
@@ -29,7 +29,7 @@ This project uses an **autonomous multi-agent orchestration system** where speci
   - Transition between project phases
 - **When to invoke**: Start of each session, phase transitions, major blockers
 
-#### Project Shepherd (devstral2)
+#### Project Shepherd 
 - **Role**: Day-to-day coordination and task management
 - **Responsibilities**:
   - Break down phase goals into actionable tasks
@@ -42,7 +42,7 @@ This project uses an **autonomous multi-agent orchestration system** where speci
 
 ### Development Layer
 
-#### devstral2 (Swift/iOS Development)
+#### Swift/iOS Development
 - **Role**: Primary iOS/Swift development specialist
 - **Responsibilities**:
   - Implement SwiftUI views and ViewModels
@@ -56,7 +56,7 @@ This project uses an **autonomous multi-agent orchestration system** where speci
   - Use structured concurrency (async/await, actors)
   - No external dependencies (iOS SDK only)
 
-#### devstral2 (Backend Architecture)
+#### Backend Architecture
 - **Role**: Data layer and service architecture
 - **Responsibilities**:
   - Design and implement CoreData schema with CloudKit
@@ -69,7 +69,7 @@ This project uses an **autonomous multi-agent orchestration system** where speci
   - Proper CoreData concurrency handling
   - CloudKit sync with conflict resolution
 
-#### devstral2 (DevOps Automation)
+#### DevOps Automation
 - **Role**: Build configuration and deployment automation
 - **Responsibilities**:
   - Initialize and configure Xcode project
@@ -86,7 +86,7 @@ This project uses an **autonomous multi-agent orchestration system** where speci
 
 ### Quality Assurance Layer
 
-#### devstral2 (QA/Testing)
+#### QA/Testing
 - **Role**: Screenshot-obsessed QA specialist and test certification
 - **Responsibilities**:
   - Demand visual proof for every implemented feature
@@ -104,7 +104,7 @@ This project uses an **autonomous multi-agent orchestration system** where speci
   - **No fantasy approvals**: Must see it running
 - **When to invoke**: After any UI implementation, after writing tests, before phase completion
 
-#### devstral2 (Performance Benchmarking)
+#### Performance Benchmarking
 - **Role**: Performance validation and optimization
 - **Responsibilities**:
   - Measure UI performance (must maintain 60fps)
@@ -122,7 +122,7 @@ This project uses an **autonomous multi-agent orchestration system** where speci
 
 ### Design Layer
 
-#### devstral2 (UI Design)
+#### UI Design
 - **Role**: Visual design implementation and accessibility
 - **Responsibilities**:
   - Implement color scheme per spec (accent, timer, success colors)
