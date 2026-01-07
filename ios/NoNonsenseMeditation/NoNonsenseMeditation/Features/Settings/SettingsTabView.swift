@@ -17,6 +17,7 @@ struct SettingsTabView: View {
     @State private var healthKitViewModel = HealthKitViewModel()
     @State private var showShareSheet = false
     @State private var exportedFileURL: URL?
+    @State private var showingImportPicker = false
 
     // MARK: - Body
 
@@ -65,6 +66,23 @@ struct SettingsTabView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will permanently delete all your meditation sessions. This action cannot be undone.")
+        }
+        .confirmationDialog(
+            "Restart Required",
+            isPresented: Binding(
+                get: { viewModel.activeConfirmationDialog == .restartRequired },
+                set: { if !$0 { viewModel.activeConfirmationDialog = nil } }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Restart Now") {
+                viewModel.confirmRestart()
+            }
+            Button("Cancel", role: .cancel) {
+                viewModel.cancelRestart()
+            }
+        } message: {
+            Text("Changing iCloud sync settings requires restarting the app. Your current session will be saved.")
         }
         .alert(
             viewModel.activeAlert?.title ?? "",
@@ -234,42 +252,58 @@ struct SettingsTabView: View {
     @ViewBuilder
     private var notificationsSection: some View {
         Section {
-            // Daily Reminder Toggle
-            Toggle(isOn: $viewModel.dailyReminderEnabled) {
-                Label {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Daily Reminder")
-                        Text("Get reminded to meditate every day")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                } icon: {
-                    Image(systemName: "bell.fill")
-                        .foregroundStyle(.red)
-                }
-            }
-            .onChange(of: viewModel.dailyReminderEnabled) { oldValue, newValue in
-                if newValue && !viewModel.notificationsEnabled {
+            if viewModel.notificationAuthStatus == .notDetermined {
+                Button {
                     Task {
                         await viewModel.requestNotificationPermissions()
+                        await viewModel.updateNotificationAuthStatus()
+                    }
+                } label: {
+                    Label("Enable Notifications", systemImage: "bell.badge")
+                }
+                .buttonStyle(.borderedProminent)
+            } else if viewModel.notificationAuthStatus == .denied {
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("Notifications Disabled", systemImage: "bell.slash")
+                        .foregroundStyle(.secondary)
+                    Button("Open Settings") {
+                        viewModel.openSettings()
+                    }
+                    .buttonStyle(.bordered)
+                }
+            } else {
+                // Authorized - show toggle and time picker
+                Toggle(isOn: $viewModel.dailyReminderEnabled) {
+                    Label {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Daily Reminder")
+                            Text("Get reminded to meditate every day")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } icon: {
+                        Image(systemName: "bell.fill")
+                            .foregroundStyle(.red)
                     }
                 }
-            }
 
-            // Reminder Time Picker
-            if viewModel.dailyReminderEnabled {
-                DatePicker(
-                    "Reminder Time",
-                    selection: $viewModel.dailyReminderTime,
-                    displayedComponents: .hourAndMinute
-                )
+                if viewModel.dailyReminderEnabled {
+                    DatePicker(
+                        "Reminder Time",
+                        selection: $viewModel.dailyReminderTime,
+                        displayedComponents: .hourAndMinute
+                    )
+                }
             }
         } header: {
             Text("Notifications")
         } footer: {
-            if viewModel.dailyReminderEnabled {
+            if viewModel.notificationAuthStatus == .authorized && viewModel.dailyReminderEnabled {
                 Text("You'll receive a daily notification at your chosen time.")
             }
+        }
+        .task {
+            await viewModel.updateNotificationAuthStatus()
         }
     }
 
@@ -330,6 +364,29 @@ struct SettingsTabView: View {
                 }
             }
             .disabled(viewModel.isExporting)
+
+            // Import Data Button
+            Button {
+                showingImportPicker = true
+            } label: {
+                Label("Import Data", systemImage: "square.and.arrow.down")
+                    .foregroundStyle(.green)
+            }
+            .fileImporter(
+                isPresented: $showingImportPicker,
+                allowedContentTypes: [.json],
+                allowsMultipleSelection: false
+            ) { result in
+                switch result {
+                case .success(let urls):
+                    guard let url = urls.first else { return }
+                    Task {
+                        _ = await viewModel.importData(from: url, strategy: .skipDuplicates)
+                    }
+                case .failure(let error):
+                    viewModel.activeAlert = .error("Failed to select file: \(error.localizedDescription)")
+                }
+            }
 
             // Clear All Data Button
             Button(role: .destructive) {

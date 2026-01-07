@@ -17,6 +17,9 @@ struct TimerSetupView: View {
     /// ViewModel for timer state management
     @State private var viewModel = TimerViewModel()
 
+    /// Intent coordinator for handling App Intent actions
+    @State private var intentCoordinator = IntentCoordinator.shared
+
     /// Selected duration in minutes (loaded from UserDefaults)
     @State private var selectedDuration: Int = {
         let savedDuration = UserDefaults.standard.integer(forKey: Constants.UserDefaultsKeys.defaultDuration)
@@ -77,6 +80,14 @@ struct TimerSetupView: View {
             }
             .navigationDestination(isPresented: $showSettings) {
                 SettingsTabView()
+            }
+            .task {
+                // Handle pending intent actions when view appears
+                handlePendingIntentAction()
+            }
+            .onChange(of: intentCoordinator.pendingAction) { _, _ in
+                // Handle new intent actions that arrive while view is visible
+                handlePendingIntentAction()
             }
         }
     }
@@ -254,6 +265,36 @@ struct TimerSetupView: View {
 
         // Navigate to active meditation view
         isActive = true
+    }
+
+    /// Handle pending intent actions from App Intents (Shortcuts, Siri)
+    private func handlePendingIntentAction() {
+        guard let action = intentCoordinator.pendingAction else { return }
+
+        switch action {
+        case .startMeditation(let durationMinutes):
+            // Set the duration from the intent
+            selectedDuration = durationMinutes
+
+            // Small delay to ensure view is ready
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+
+                // Start meditation with intent duration
+                viewModel.startTimer(duration: TimeInterval(durationMinutes * 60))
+
+                // Navigate to active meditation view
+                isActive = true
+
+                // Clear the pending action
+                intentCoordinator.clearPendingAction()
+            }
+
+        case .pauseMeditation, .resumeMeditation, .stopMeditation:
+            // These actions should be handled by ActiveMeditationView
+            // Not applicable in TimerSetupView
+            break
+        }
     }
 }
 

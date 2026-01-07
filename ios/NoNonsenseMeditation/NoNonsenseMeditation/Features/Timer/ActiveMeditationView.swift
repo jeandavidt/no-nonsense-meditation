@@ -141,7 +141,7 @@ struct ActiveMeditationView: View {
                     .frame(minWidth: 160)
                 }
                 .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
+                .controlSize(.large)
             } else if viewModel.isPaused {
                 // Resume button
                 Button(action: {
@@ -156,7 +156,7 @@ struct ActiveMeditationView: View {
                     .frame(minWidth: 160)
                 }
                 .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
+                .controlSize(.large)
 
                 // End session button
                 Button(action: {
@@ -168,7 +168,7 @@ struct ActiveMeditationView: View {
                         .frame(minWidth: 160)
                 }
                 .buttonStyle(.bordered)
-                .controlSize(.regular)
+                .controlSize(.large)
                 .foregroundColor(.red)
             } else if viewModel.isRunning && viewModel.remainingTime <= 0 {
                 // Overtime State - "Finish Session" button

@@ -8,6 +8,7 @@
 import Foundation
 import Observation
 import SwiftUI
+import UserNotifications
 
 /// ViewModel for managing app settings and preferences
 /// Uses @Observable macro for SwiftUI observation
@@ -38,6 +39,7 @@ class SettingsViewModel {
     enum ConfirmationDialog: Identifiable {
         case clearAllData
         case exportData
+        case restartRequired
 
         var id: String {
             switch self {
@@ -45,6 +47,8 @@ class SettingsViewModel {
                 return "clearAllData"
             case .exportData:
                 return "exportData"
+            case .restartRequired:
+                return "restartRequired"
             }
         }
     }
@@ -173,9 +177,16 @@ class SettingsViewModel {
     /// Whether iCloud sync is enabled
     var iCloudSyncEnabled: Bool {
         didSet {
-            UserDefaults.standard.set(iCloudSyncEnabled, forKey: Constants.UserDefaultsKeys.iCloudSyncEnabled)
+            // Show restart confirmation when user changes the setting
+            if oldValue != iCloudSyncEnabled {
+                previousICloudSyncValue = oldValue
+                activeConfirmationDialog = .restartRequired
+            }
         }
     }
+
+    /// Previous value of iCloud sync setting (for canceling)
+    private var previousICloudSyncValue: Bool = false
 
     /// Current confirmation dialog
     var activeConfirmationDialog: ConfirmationDialog?
@@ -192,10 +203,15 @@ class SettingsViewModel {
     /// Total meditation statistics
     var statistics: MeditationStatistics?
 
+    /// Current notification authorization status
+    var notificationAuthStatus: NotificationService.AuthorizationStatus = .notDetermined
+
     // MARK: - Dependencies
 
     private let sessionService: MeditationSessionService
     private let notificationService: NotificationService
+    private let persistenceController: PersistenceController
+    private let importService = DataImportService()
 
     // MARK: - Computed Properties
 
@@ -238,14 +254,38 @@ class SettingsViewModel {
         Constants.Timer.presetDurations
     }
 
+    // MARK: - Persistence Status
+
+    /// Current persistence mode
+    var persistenceMode: PersistenceMode {
+        persistenceController.persistenceMode
+    }
+
+    /// User-facing persistence status message
+    var persistenceStatusMessage: String {
+        persistenceMode.description
+    }
+
+    /// Icon for persistence status
+    var persistenceStatusIcon: String {
+        persistenceMode.icon
+    }
+
+    /// Color for persistence status icon
+    var persistenceStatusColor: Color {
+        persistenceMode.iconColor
+    }
+
     // MARK: - Initialization
 
     init(
         sessionService: MeditationSessionService = MeditationSessionService(),
-        notificationService: NotificationService = NotificationService()
+        notificationService: NotificationService = NotificationService(),
+        persistenceController: PersistenceController = .shared
     ) {
         self.sessionService = sessionService
         self.notificationService = notificationService
+        self.persistenceController = persistenceController
 
         // Load settings from UserDefaults
         let savedDuration = UserDefaults.standard.integer(forKey: Constants.UserDefaultsKeys.defaultDuration)
@@ -273,7 +313,16 @@ class SettingsViewModel {
         let keepScreenAwakeValue = UserDefaults.standard.bool(forKey: Constants.UserDefaultsKeys.keepScreenAwake)
         let hapticFeedbackEnabledValue = UserDefaults.standard.bool(forKey: Constants.UserDefaultsKeys.hapticFeedbackEnabled)
         let overrideSilentModeValue = UserDefaults.standard.bool(forKey: Constants.UserDefaultsKeys.overrideSilentMode)
-        let iCloudSyncEnabledValue = UserDefaults.standard.bool(forKey: Constants.UserDefaultsKeys.iCloudSyncEnabled)
+
+        // iCloud sync enabled - default to true if not set
+        let iCloudSyncEnabledValue: Bool
+        if UserDefaults.standard.object(forKey: Constants.UserDefaultsKeys.iCloudSyncEnabled) != nil {
+            iCloudSyncEnabledValue = UserDefaults.standard.bool(forKey: Constants.UserDefaultsKeys.iCloudSyncEnabled)
+        } else {
+            // First launch - default to true and save it
+            iCloudSyncEnabledValue = true
+            UserDefaults.standard.set(true, forKey: Constants.UserDefaultsKeys.iCloudSyncEnabled)
+        }
 
         // Initialize all properties
         self.defaultDuration = defaultDurationValue
@@ -386,6 +435,46 @@ class SettingsViewModel {
         }
     }
 
+    /// Import meditation data from JSON file
+    func importData(from url: URL, strategy: DataImportService.MergeStrategy = .skipDuplicates) async -> DataImportService.ImportResult? {
+        isExporting = true // Reuse loading flag
+
+        do {
+            let result = try await importService.importSessions(from: url, strategy: strategy)
+
+            // Reload statistics
+            await loadStatistics()
+
+            isExporting = false
+
+            // Show success
+            activeAlert = .success("Imported \(result.successCount) of \(result.totalProcessed) sessions")
+
+            return result
+        } catch {
+            isExporting = false
+            activeAlert = .error("Failed to import data: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    /// Confirm restart and apply iCloud sync setting change
+    func confirmRestart() {
+        // Save the new setting
+        UserDefaults.standard.set(iCloudSyncEnabled, forKey: Constants.UserDefaultsKeys.iCloudSyncEnabled)
+
+        // Exit the app - iOS will kill it and user can relaunch
+        exit(0)
+    }
+
+    /// Cancel iCloud sync change and revert to previous value
+    func cancelRestart() {
+        // Revert to previous value
+        iCloudSyncEnabled = previousICloudSyncValue
+        // Clear the confirmation dialog
+        activeConfirmationDialog = nil
+    }
+
     /// Request notification permissions
     func requestNotificationPermissions() async {
         do {
@@ -407,6 +496,12 @@ class SettingsViewModel {
                 await UIApplication.shared.open(settingsURL)
             }
         }
+    }
+
+    /// Update notification authorization status
+    func updateNotificationAuthStatus() async {
+        let status = await notificationService.checkAuthorizationStatus()
+        notificationAuthStatus = status
     }
 
     // MARK: - Private Methods

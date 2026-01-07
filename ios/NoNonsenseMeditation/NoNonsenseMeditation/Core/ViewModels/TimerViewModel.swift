@@ -52,6 +52,9 @@ class TimerViewModel {
     /// Whether the completion sound has been played for the current session
     private var hasPlayedCompletionSound = false
 
+    /// Session start time for tracking actual meditation duration
+    private var sessionStartTime: Date?
+
     // MARK: - Dependencies
 
     /// Timer service for handling countdown logic
@@ -91,6 +94,9 @@ class TimerViewModel {
             self.elapsedTime = 0
             self.progress = 0
             self.formattedTime = formatTime(duration)
+
+            // Record session start time for HealthKit accuracy
+            self.sessionStartTime = Date()
 
             // Start timer service
             await timerService.startTimer(duration: duration)
@@ -186,7 +192,8 @@ class TimerViewModel {
             _ = await sessionManager.completeSession(
                 plannedDuration: totalDuration,
                 actualDuration: actualMeditationTime,
-                wasPaused: state == .paused
+                wasPaused: state == .paused,
+                startDate: sessionStartTime  // Pass actual start time for accurate HealthKit duration
             )
 
             // Update state
@@ -214,6 +221,9 @@ class TimerViewModel {
 
             // Cancel any pending notifications
             await notificationService.cancelCompletionNotification()
+
+            // Clear session start time
+            self.sessionStartTime = nil
 
             // Update state
             self.state = .idle
