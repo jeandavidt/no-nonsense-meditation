@@ -6,7 +6,7 @@
         <attribute name="durationElapsed" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
         <attribute name="durationPlanned" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="durationTotal" attributeType="Double" defaultValueString="0.0" usesScalarValueType="YES"/>
-        <attribute name="idSession" attributeType="UUID" usesScalarValueType="NO"/>
+        <attribute name="idSession" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="isSessionValid" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="pauseCount" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
         <attribute name="syncedToHealthKit" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
@@ -18,10 +18,5 @@
         <fetchIndex name="byCreatedAt">
             <fetchIndexElement property="createdAt" type="Binary" order="descending"/>
         </fetchIndex>
-        <uniquenessConstraints>
-            <uniquenessConstraint>
-                <constraint value="idSession"/>
-            </uniquenessConstraint>
-        </uniquenessConstraints>
     </entity>
 </model>

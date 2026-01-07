@@ -1,0 +1,54 @@
+{
+  "fill" : {
+    "linear-gradient" : [
+      "display-p3:0.18851,0.46274,0.76943,1.00000",
+      "display-p3:0.36706,0.17995,0.76943,1.00000"
+    ],
+    "orientation" : {
+      "start" : {
+        "x" : 0.5,
+        "y" : 0
+      },
+      "stop" : {
+        "x" : 0.5,
+        "y" : 0.7
+      }
+    }
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "blend-mode" : "screen",
+          "fill" : {
+            "solid" : "display-p3:0.93956,0.96783,0.94178,1.00000"
+          },
+          "glass" : true,
+          "image-name" : "leaves.png",
+          "name" : "leaves",
+          "position" : {
+            "scale" : 1.2,
+            "translation-in-points" : [
+              0,
+              0
+            ]
+          }
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.5
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
