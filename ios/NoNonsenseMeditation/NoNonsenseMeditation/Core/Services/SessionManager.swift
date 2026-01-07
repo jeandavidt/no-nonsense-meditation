@@ -13,6 +13,11 @@ import CoreData
 @MainActor
 final class SessionManager {
 
+    // MARK: - Singleton
+
+    /// Shared instance for App Intents access
+    static let shared = SessionManager()
+
     // MARK: - Properties
 
     /// Reference to persistence controller
@@ -110,7 +115,14 @@ final class SessionManager {
         session.completedAt = Date()
         session.durationTotal = actualTime / 60.0 // Convert to minutes
         session.durationElapsed = elapsedTime / 60.0 // Convert to minutes
-        session.isSessionValid = actualTime >= 15 // 15 seconds minimum
+
+        // Session is valid if >= 15 seconds OR >= 5% of planned duration
+        let minimumDuration = min(
+            Constants.Timer.minimumValidSessionSeconds,
+            Double(session.durationPlanned) * 60.0 * Constants.Timer.minimumValidSessionPercentage
+        )
+        session.isSessionValid = actualTime >= minimumDuration
+
         session.wasPaused = pauseCount > 0
         session.pauseCount = Int16(pauseCount)
 
@@ -137,10 +149,11 @@ final class SessionManager {
     ///   - plannedDuration: Planned duration in seconds
     ///   - actualDuration: Actual meditation time in seconds
     ///   - wasPaused: Whether the session was paused
+    ///   - startDate: When the meditation session started (for accurate HealthKit duration)
     /// - Returns: The completed session
     /// - Note: Returns NSManagedObject which is not Sendable, but safe to use with CoreData context
     @discardableResult
-    func completeSession(plannedDuration: TimeInterval, actualDuration: TimeInterval, wasPaused: Bool) async -> MeditationSession? {
+    func completeSession(plannedDuration: TimeInterval, actualDuration: TimeInterval, wasPaused: Bool, startDate: Date? = nil) async -> MeditationSession? {
         // Create new session in CoreData
         let context = persistenceController.viewContext
         let session = MeditationSession(context: context)
@@ -149,9 +162,16 @@ final class SessionManager {
         session.durationPlanned = Int16(plannedDuration / 60.0) // Convert to minutes
         session.durationTotal = actualDuration / 60.0 // Convert to minutes
         session.durationElapsed = actualDuration / 60.0 // Convert to minutes
-        session.createdAt = Date()
+        session.createdAt = startDate ?? Date()  // Use provided start date or fallback to now
         session.completedAt = Date()
-        session.isSessionValid = actualDuration >= 15 // 15 seconds minimum
+
+        // Session is valid if >= 15 seconds OR >= 5% of planned duration
+        let minimumDuration = min(
+            Constants.Timer.minimumValidSessionSeconds,
+            (plannedDuration / 60.0) * Constants.Timer.minimumValidSessionPercentage * 60.0 // Convert to seconds
+        )
+        session.isSessionValid = actualDuration >= minimumDuration
+
         session.wasPaused = wasPaused
         session.pauseCount = wasPaused ? 1 : 0
         session.syncedToHealthKit = false
@@ -181,21 +201,20 @@ final class SessionManager {
         // Check authorization status
         let authStatus = await healthKitService.checkAuthorizationStatus()
         guard authStatus == .authorized else {
+            print("[SessionManager] Skipping HealthKit sync - authorization status: \(authStatus)")
             return
         }
 
         // Calculate session times
         guard let startDate = session.createdAt,
               let endDate = session.completedAt else {
+            print("[SessionManager] Skipping HealthKit sync - missing session dates")
             return
         }
-
-        let duration = session.durationTotal * 60.0 // Convert minutes to seconds
 
         // Sync to HealthKit
         do {
             try await healthKitService.saveMindfulMinutes(
-                duration: duration,
                 startDate: startDate,
                 endDate: endDate
             )
@@ -203,9 +222,10 @@ final class SessionManager {
             // Mark as synced in CoreData
             session.syncedToHealthKit = true
             try? persistenceController.saveContext()
+            print("[SessionManager] Successfully synced session to HealthKit and marked as synced")
         } catch {
-            // Log error but don't fail the session
-            print("Failed to sync session to HealthKit: \(error.localizedDescription)")
+            // Log error with session details for debugging
+            print("[SessionManager] Failed to sync session \(session.objectID) to HealthKit: \(error.localizedDescription)")
         }
     }
 
@@ -228,7 +248,7 @@ final class SessionManager {
         }
 
         // Prepare batch data
-        var sessionData: [(duration: TimeInterval, startDate: Date, endDate: Date)] = []
+        var sessionData: [(startDate: Date, endDate: Date)] = []
 
         for session in sessions {
             guard let startDate = session.createdAt,
@@ -236,12 +256,12 @@ final class SessionManager {
                 continue
             }
 
-            let duration = session.durationTotal * 60.0 // Convert minutes to seconds
-            sessionData.append((duration: duration, startDate: startDate, endDate: endDate))
+            sessionData.append((startDate: startDate, endDate: endDate))
         }
 
         // Batch sync to HealthKit
         if !sessionData.isEmpty {
+            print("[SessionManager] Batch syncing \(sessionData.count) unsynced session(s) to HealthKit")
             try await healthKitService.batchSaveMindfulMinutes(sessions: sessionData)
 
             // Mark all as synced
@@ -249,6 +269,7 @@ final class SessionManager {
                 session.syncedToHealthKit = true
             }
             try? persistenceController.saveContext()
+            print("[SessionManager] Successfully batch synced and marked \(sessionData.count) session(s) as synced")
         }
     }
 
