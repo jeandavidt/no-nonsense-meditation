@@ -35,19 +35,28 @@ final class CloudKitSyncManager: ObservableObject {
     /// Persistence controller
     private let persistenceController: PersistenceController
 
+    /// Get current persistence mode from controller
+    var persistenceMode: PersistenceMode {
+        return persistenceController.persistenceMode
+    }
+
     // MARK: - Initialization
 
     /// Initialize CloudKit sync manager
     /// - Parameter persistenceController: CoreData persistence controller
     init(persistenceController: PersistenceController = .shared) {
         self.persistenceController = persistenceController
-        self.isCloudKitAvailable = persistenceController.isCloudKitAvailable
 
-        // Observe sync notifications
-        setupSyncObservers()
-
-        // Check CloudKit account status
-        checkCloudKitAccountStatus()
+        // Check if CloudKit is actually active in persistence controller
+        if case .cloudKit = persistenceController.persistenceMode {
+            self.isCloudKitAvailable = true
+            setupSyncObservers()
+            checkCloudKitAccountStatus()
+        } else {
+            self.isCloudKitAvailable = false
+            self.syncStatus = .idle
+            print("CloudKitSyncManager: CloudKit not active in persistence controller")
+        }
     }
 
     // MARK: - Setup

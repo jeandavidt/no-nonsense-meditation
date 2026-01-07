@@ -75,8 +75,9 @@ class MeditationSessionService {
         session.wasPaused = pauseCount > 0
         session.completedAt = completedDate
 
-        // Session is valid if it lasted at least 15 seconds (0.25 minutes)
-        session.isSessionValid = actualDuration >= 0.25
+        // Session is valid if >= 0.25 minutes (15 seconds) OR >= 5% of planned duration
+        let minimumMinutes = min(0.25, Double(session.durationPlanned) * Constants.Timer.minimumValidSessionPercentage)
+        session.isSessionValid = actualDuration >= minimumMinutes
 
         try persistenceController.saveContext()
 
@@ -373,7 +374,11 @@ extension MeditationSessionService {
                 session.durationPlanned = Int16(data.plannedDuration)
                 session.durationTotal = data.actualDuration
                 session.durationElapsed = data.actualDuration
-                session.isSessionValid = data.actualDuration >= 0.25
+
+                // Session is valid if >= 0.25 minutes (15 seconds) OR >= 5% of planned duration
+                let minimumMinutes = min(0.25, Double(data.plannedDuration) * Constants.Timer.minimumValidSessionPercentage)
+                session.isSessionValid = data.actualDuration >= minimumMinutes
+
                 session.createdAt = data.date
                 session.completedAt = data.date.addingTimeInterval(data.actualDuration * 60)
                 session.wasPaused = false

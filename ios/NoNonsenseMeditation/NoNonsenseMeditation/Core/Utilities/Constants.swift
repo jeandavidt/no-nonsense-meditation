@@ -37,6 +37,9 @@ enum Constants {
         /// Minimum session duration to be considered valid (in seconds)
         static let minimumValidSessionSeconds: TimeInterval = 15
 
+        /// Minimum session percentage to be considered valid (5% of planned duration)
+        static let minimumValidSessionPercentage: Double = 0.05
+
         /// Timer update interval in seconds
         static let updateInterval: TimeInterval = 1.0
     }
