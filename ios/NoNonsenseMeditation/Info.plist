@@ -6,6 +6,10 @@
 	<string>NoNonsense</string>
 	<key>NSUserNotificationUsageDescription</key>
 	<string>No Nonsense Meditation would like to send you daily reminders to help you maintain your meditation practice.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Access your meditation data from all apps to show combined statistics</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Save your meditation sessions to Apple Health</string>
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

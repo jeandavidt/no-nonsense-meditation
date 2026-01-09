@@ -16,6 +16,7 @@ protocol HealthStoreProtocol: Sendable {
     func requestAuthorization(toShare typesToShare: Set<HKSampleType>?, read typesToRead: Set<HKObjectType>?) async throws
     func save(_ object: HKObject) async throws
     func save(_ objects: [HKObject]) async throws
+    func executeQuery(_ query: HKQuery)
 }
 
 // Wrapper to bridge HKHealthStore to HealthStoreProtocol
@@ -37,6 +38,10 @@ struct HKHealthStoreWrapper: HealthStoreProtocol {
 
     func save(_ objects: [HKObject]) async throws {
         try await store.save(objects)
+    }
+
+    func executeQuery(_ query: HKQuery) {
+        store.execute(query)
     }
 }
 
@@ -122,9 +127,10 @@ actor HealthKitService {
         }
 
         let typesToShare: Set<HKSampleType> = [mindfulSessionType]
+        let typesToRead: Set<HKObjectType> = [mindfulSessionType]
 
         do {
-            try await healthStore.requestAuthorization(toShare: typesToShare, read: [])
+            try await healthStore.requestAuthorization(toShare: typesToShare, read: typesToRead)
         } catch {
             throw HealthKitError.authorizationDenied
         }
@@ -211,6 +217,51 @@ actor HealthKitService {
             print("[HealthKit] Failed to batch save samples: \(error)")
             print("[HealthKit] Current authorization status: \(checkAuthorizationStatus())")
             throw HealthKitError.syncFailed(error)
+        }
+    }
+
+    /// Query mindful session samples from HealthKit
+    /// - Parameters:
+    ///   - startDate: Start of date range
+    ///   - endDate: End of date range
+    /// - Returns: Array of mindful session samples
+    /// - Throws: HealthKitError if query fails
+    func queryMindfulSessions(from startDate: Date, to endDate: Date) async throws -> [HKCategorySample] {
+        guard let healthStore = healthStore else {
+            throw HealthKitError.notAvailable
+        }
+
+        // Verify read authorization
+        let status = checkAuthorizationStatus()
+        guard status == .authorized else {
+            throw HealthKitError.authorizationDenied
+        }
+
+        // Create predicate for date range
+        let predicate = HKQuery.predicateForSamples(
+            withStart: startDate,
+            end: endDate,
+            options: [.strictStartDate, .strictEndDate]
+        )
+
+        // Execute query
+        return try await withCheckedThrowingContinuation { continuation in
+            let query = HKSampleQuery(
+                sampleType: mindfulSessionType,
+                predicate: predicate,
+                limit: HKObjectQueryNoLimit,
+                sortDescriptors: [NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)]
+            ) { query, samples, error in
+                if let error = error {
+                    continuation.resume(throwing: HealthKitError.syncFailed(error))
+                    return
+                }
+
+                let categorySamples = (samples as? [HKCategorySample]) ?? []
+                continuation.resume(returning: categorySamples)
+            }
+
+            healthStore.executeQuery(query)
         }
     }
 }

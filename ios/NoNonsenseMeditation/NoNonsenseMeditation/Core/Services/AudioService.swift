@@ -318,20 +318,24 @@ actor AudioService: AudioServiceProtocol {
 
         // Enable Play command
         commandCenter.playCommand.isEnabled = true
-        commandCenter.playCommand.addTarget { [weak self] event in
+        commandCenter.playCommand.addTarget { [weak self] _ in
             guard let self = self else { return .commandFailed }
-            Task {
-                await self.onRemotePlayRequested?()
+            if let onPlay = self.onRemotePlayRequested {
+                Task {
+                    await onPlay()
+                }
             }
             return .success
         }
 
         // Enable Pause command
         commandCenter.pauseCommand.isEnabled = true
-        commandCenter.pauseCommand.addTarget { [weak self] event in
+        commandCenter.pauseCommand.addTarget { [weak self] _ in
             guard let self = self else { return .commandFailed }
-            Task {
-                await self.onRemotePauseRequested?()
+            if let onPause = self.onRemotePauseRequested {
+                Task {
+                    await onPause()
+                }
             }
             return .success
         }

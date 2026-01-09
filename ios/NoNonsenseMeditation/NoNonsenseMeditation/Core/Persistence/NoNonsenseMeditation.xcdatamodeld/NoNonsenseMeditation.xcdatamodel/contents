@@ -12,6 +12,7 @@
         <attribute name="syncedToHealthKit" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="syncedToiCloud" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="wasPaused" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
+        <attribute name="achievements" optional="YES" attributeType="Transformable" valueTransformerName="NSSecureUnarchiveFromDataTransformer"/>
         <fetchIndex name="byCompletedAt">
             <fetchIndexElement property="completedAt" type="Binary" order="descending"/>
         </fetchIndex>

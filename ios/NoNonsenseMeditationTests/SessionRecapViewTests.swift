@@ -17,8 +17,9 @@ final class SessionRecapViewTests: XCTestCase {
         viewModel.startTimer(duration: 300) // 5 minutes
         viewModel.stopTimer()
 
-        // Create the SessionRecapView
-        let recapView = SessionRecapView(viewModel: viewModel)
+        // Create the SessionRecapView deterministically from a RecapInput
+        let recap = RecapInput(plannedDuration: viewModel.totalDuration, actualDuration: viewModel.wasOvertimeDiscarded ? viewModel.totalDuration : viewModel.elapsedTime, wasOvertimeDiscarded: viewModel.wasOvertimeDiscarded, wasPaused: viewModel.isPaused, unlockedAchievements: [])
+        let recapView = SessionRecapView(recap: recap)
 
         // Verify the view can be created without crashing
         XCTAssertNotNil(recapView)
@@ -152,7 +153,8 @@ final class SessionRecapViewTests: XCTestCase {
 
         viewModel.stopTimer()
 
-        let recapView = SessionRecapView(viewModel: viewModel)
+        let recap = RecapInput(plannedDuration: viewModel.totalDuration, actualDuration: viewModel.wasOvertimeDiscarded ? viewModel.totalDuration : viewModel.elapsedTime, wasOvertimeDiscarded: viewModel.wasOvertimeDiscarded, wasPaused: viewModel.isPaused, unlockedAchievements: [])
+        let recapView = SessionRecapView(recap: recap)
 
         // View should be created successfully
         XCTAssertNotNil(recapView)

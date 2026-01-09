@@ -32,6 +32,9 @@ final class SessionManager {
     /// HealthKit service for syncing meditation sessions
     private let healthKitService: HealthKitService
 
+    /// Achievement service for tracking achievements
+    private let achievementService: AchievementService
+
     /// Pause count for current session
     private var pauseCount: Int = 0
 
@@ -48,6 +51,7 @@ final class SessionManager {
         self.persistenceController = persistenceController
         self.timerService = MeditationTimerService()
         self.healthKitService = healthKitService
+        self.achievementService = AchievementService.shared
     }
 
     // MARK: - Session Lifecycle
@@ -126,6 +130,14 @@ final class SessionManager {
         session.wasPaused = pauseCount > 0
         session.pauseCount = Int16(pauseCount)
 
+        // Check for newly unlocked achievements
+        let newlyUnlocked = achievementService.checkAndUnlockAchievements()
+
+        // Save achievements to this session
+        if !newlyUnlocked.isEmpty {
+            try? achievementService.saveAchievementsToSession(session, achievements: newlyUnlocked)
+        }
+
         // Save context
         try persistenceController.saveContext()
 
@@ -177,6 +189,14 @@ final class SessionManager {
         session.syncedToHealthKit = false
         session.syncedToiCloud = false
 
+        // Check for newly unlocked achievements
+        let newlyUnlocked = achievementService.checkAndUnlockAchievements()
+
+        // Save achievements to this session
+        if !newlyUnlocked.isEmpty {
+            try? achievementService.saveAchievementsToSession(session, achievements: newlyUnlocked)
+        }
+
         // Save context
         try? persistenceController.saveContext()
 
@@ -184,6 +204,51 @@ final class SessionManager {
         if session.isSessionValid {
             await syncToHealthKit(session: session)
         }
+
+        return session
+    }
+
+    /// Complete a cancelled session (saves as invalid)
+    /// - Parameters:
+    ///   - plannedDuration: Planned duration in seconds
+    ///   - elapsedDuration: How long session ran before cancellation in seconds
+    ///   - startDate: When the session started
+    /// - Returns: The invalid session
+    @discardableResult
+    func completeCancelledSession(
+        plannedDuration: TimeInterval,
+        elapsedDuration: TimeInterval,
+        startDate: Date? = nil
+    ) async -> MeditationSession? {
+        let context = persistenceController.viewContext
+        let session = MeditationSession(context: context)
+
+        session.idSession = UUID()
+        session.durationPlanned = Int16(plannedDuration / 60.0) // minutes
+        session.durationTotal = elapsedDuration / 60.0 // minutes
+        session.durationElapsed = elapsedDuration / 60.0 // minutes
+        session.createdAt = startDate ?? Date()
+        session.completedAt = Date()
+
+        // EXPLICITLY INVALID - key change
+        session.isSessionValid = false
+
+        session.wasPaused = pauseCount > 0
+        session.pauseCount = Int16(pauseCount)
+        session.syncedToHealthKit = false // Invalid sessions never sync
+        session.syncedToiCloud = false
+
+        // Save context
+        try? persistenceController.saveContext()
+
+        // Clear active session tracking
+        self.activeSession = nil
+        self.pauseCount = 0
+
+        // Reset timer
+        await timerService.resetTimer()
+
+        print("[SessionManager] Saved cancelled session as INVALID")
 
         return session
     }
@@ -273,7 +338,8 @@ final class SessionManager {
         }
     }
 
-    /// Cancel the current session without saving
+    /// Cancel session without saving (deprecated)
+    @available(*, deprecated, message: "Use completeCancelledSession to preserve session history")
     func cancelSession() async {
         guard let session = activeSession else { return }
 

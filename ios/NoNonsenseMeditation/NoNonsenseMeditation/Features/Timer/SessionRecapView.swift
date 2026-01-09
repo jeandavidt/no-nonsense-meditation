@@ -6,6 +6,15 @@
 //
 
 import SwiftUI
+/// Lightweight value object passed to the recap view to make it deterministic
+struct RecapInput: Identifiable, Hashable {
+    let id = UUID()
+    let plannedDuration: TimeInterval
+    let actualDuration: TimeInterval
+    let wasOvertimeDiscarded: Bool
+    let wasPaused: Bool
+    let unlockedAchievements: [Achievement]
+}
 
 /// View for displaying meditation session recap
 /// Shows statistics and summary of completed meditation session
@@ -14,7 +23,8 @@ struct SessionRecapView: View {
     // MARK: - Properties
 
     /// ViewModel containing session data
-    @State private var viewModel: TimerViewModel
+    /// Recap input (single source of truth for display)
+    @State private var recap: RecapInput
 
     /// Session statistics
     @State private var statistics: SessionStatistics
@@ -24,14 +34,17 @@ struct SessionRecapView: View {
 
     // MARK: - Initialization
 
-    init(viewModel: TimerViewModel) {
-        self._viewModel = State(initialValue: viewModel)
+    init(recap: RecapInput) {
+        self._recap = State(initialValue: recap)
         
         // Calculate statistics from viewModel data
-        let plannedDuration = viewModel.totalDuration
-        let actualDuration = viewModel.elapsedTime
-        let wasPaused = viewModel.isPaused
+        // Compute deterministic statistics from the provided recap input
+        let plannedDuration = recap.plannedDuration
+        let actualDuration = recap.actualDuration
+        let wasPaused = recap.wasPaused
         
+        print("[SessionRecapView] init: planned=\(plannedDuration), actualUsed=\(actualDuration), wasOvertimeDiscarded=\(recap.wasOvertimeDiscarded)")
+
         self._statistics = State(initialValue: SessionStatistics(
             plannedDuration: plannedDuration,
             actualDuration: actualDuration,
@@ -64,10 +77,7 @@ struct SessionRecapView: View {
             .navigationTitle("Session Complete")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
-                // Belt and suspenders: ensure audio is stopped
-                if viewModel.isRunning {
-                    viewModel.stopTimer()
-                }
+                // Statistics already computed from `recap` on init; nothing else required here.
             }
         }
     }
@@ -117,18 +127,20 @@ struct SessionRecapView: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
 
-                Text(statistics.formattedActualDuration)
+                Text(recap.wasOvertimeDiscarded ? statistics.formattedPlannedDuration : statistics.formattedActualDuration)
                     .font(.system(size: 36, weight: .bold))
                     .contentTransition(.numericText())
 
-                if statistics.durationDifference > 0 {
-                    Text(statistics.formattedDurationDifference)
-                        .font(.caption)
-                        .foregroundColor(.green)
-                } else if statistics.durationDifference < 0 {
-                    Text(statistics.formattedDurationDifference)
-                        .font(.caption)
-                        .foregroundColor(.orange)
+                if !recap.wasOvertimeDiscarded {
+                    if statistics.durationDifference > 0 {
+                        Text(statistics.formattedDurationDifference)
+                            .font(.caption)
+                            .foregroundColor(.green)
+                    } else if statistics.durationDifference < 0 {
+                        Text(statistics.formattedDurationDifference)
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                    }
                 }
             }
 
@@ -257,32 +269,43 @@ struct SessionRecapView: View {
 
     /// Achievement section
     private var achievementSection: some View {
-        VStack(spacing: 12) {
-            Text("Achievement Unlocked")
-                .font(.headline)
-                .frame(maxWidth: .infinity, alignment: .leading)
+        Group {
+            if recap.unlockedAchievements.isEmpty {
+                EmptyView()
+            } else {
+                VStack(spacing: 12) {
+                    Text(recap.unlockedAchievements.count == 1 ? "Achievement Unlocked!" : "Achievements Unlocked!")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
-            VStack(spacing: 8) {
-                Image(systemName: "leaf.fill")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 40, height: 40)
-                    .foregroundColor(.green)
+                    ForEach(recap.unlockedAchievements) { achievement in
+                        HStack(spacing: 12) {
+                            Image(systemName: achievement.iconName)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 32, height: 32)
+                                .foregroundColor(achievement.color)
 
-                Text("First Session Complete")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(achievement.name)
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
 
-                Text("You've completed your first meditation session!")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
+                                Text(achievement.description)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+
+                            Spacer()
+                        }
+                        .padding()
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(achievement.color.opacity(0.1))
+                        )
+                    }
+                }
             }
-            .padding()
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.green.opacity(0.1))
-            )
         }
     }
 
@@ -304,12 +327,14 @@ struct SessionRecapView: View {
     let viewModel = TimerViewModel()
     viewModel.startTimer(duration: 300)
     viewModel.stopTimer()
-    return SessionRecapView(viewModel: viewModel)
+    let recap = RecapInput(plannedDuration: viewModel.totalDuration, actualDuration: viewModel.wasOvertimeDiscarded ? viewModel.totalDuration : viewModel.elapsedTime, wasOvertimeDiscarded: viewModel.wasOvertimeDiscarded, wasPaused: viewModel.isPaused, unlockedAchievements: [])
+    return SessionRecapView(recap: recap)
 }
 
 #Preview("Short Session") {
     let viewModel = TimerViewModel()
     viewModel.startTimer(duration: 60)
     viewModel.stopTimer()
-    return SessionRecapView(viewModel: viewModel)
+    let recap = RecapInput(plannedDuration: viewModel.totalDuration, actualDuration: viewModel.wasOvertimeDiscarded ? viewModel.totalDuration : viewModel.elapsedTime, wasOvertimeDiscarded: viewModel.wasOvertimeDiscarded, wasPaused: viewModel.isPaused, unlockedAchievements: [])
+    return SessionRecapView(recap: recap)
 }

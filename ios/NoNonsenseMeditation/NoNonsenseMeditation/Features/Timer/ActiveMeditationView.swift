@@ -17,7 +17,7 @@ struct ActiveMeditationView: View {
     @State private var viewModel: TimerViewModel
 
     /// Navigation state
-    @State private var showSessionRecap = false
+    @State private var recapInput: RecapInput? = nil
 
     /// Whether to show confirmation for early termination
     @State private var showCancelConfirmation = false
@@ -49,10 +49,24 @@ struct ActiveMeditationView: View {
                     Spacer()
                 }
                 .padding()
-                .navigationDestination(isPresented: $showSessionRecap) {
-                    SessionRecapView(viewModel: viewModel)
+                .navigationDestination(item: $recapInput) { recap in
+                    SessionRecapView(recap: recap)
                 }
             }
+        }
+        .confirmationDialog(
+            "Cancel Meditation?",
+            isPresented: $showCancelConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Cancel Session", role: .destructive) {
+                handleCancelSession()
+            }
+            Button("Keep Going", role: .cancel) {
+                // Dialog dismisses automatically
+            }
+        } message: {
+            Text("This session will be saved as invalid and won't count toward your stats or streak.")
         }
     }
 
@@ -127,7 +141,87 @@ struct ActiveMeditationView: View {
     /// Control buttons section
     private var controlButtonsSection: some View {
         VStack(spacing: 16) {
-            if viewModel.isRunning {
+            if viewModel.isRunning && viewModel.isInOvertimeMode {
+                // Overtime running state - show Pause and End controls
+                // Pause button
+                Button(action: {
+                    let impact = UIImpactFeedbackGenerator(style: .light)
+                    impact.impactOccurred()
+                    viewModel.pauseTimer()
+                }) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "pause.fill")
+                        Text("Pause")
+                    }
+                    .frame(minWidth: 160)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+
+                // End session button (saves actual overtime)
+                Button(action: {
+                    let impact = UIImpactFeedbackGenerator(style: .light)
+                    impact.impactOccurred()
+                    endMeditationEarly()
+                }) {
+                    Text("End Session")
+                        .frame(minWidth: 160)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                .foregroundColor(.red)
+            } else if viewModel.isRunning && viewModel.remainingTime <= 0 {
+                // Overtime State - Two options
+                VStack(spacing: 16) {
+                    // End Session button (primary action)
+                    Button(action: {
+                        let success = UINotificationFeedbackGenerator()
+                        success.notificationOccurred(.success)
+                        viewModel.endSessionAtPlannedDuration()
+
+                        // Build deterministic recap input and navigate immediately
+                        let newlyUnlocked = AchievementService.shared.checkAndUnlockAchievements()
+                        let recap = RecapInput(
+                            plannedDuration: viewModel.totalDuration,
+                            actualDuration: viewModel.totalDuration,
+                            wasOvertimeDiscarded: true,
+                            wasPaused: viewModel.isPaused,
+                            unlockedAchievements: newlyUnlocked
+                        )
+                        recapInput = recap
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "checkmark.circle.fill")
+                            Text("End Session")
+                        }
+                        .frame(minWidth: 160)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
+
+                    // Add Overtime button (secondary action)
+                    Button(action: {
+                        let impact = UIImpactFeedbackGenerator(style: .light)
+                        impact.impactOccurred()
+                        viewModel.stopTimer(suppressCompletionIfOvertime: true)
+
+                        let newlyUnlocked = AchievementService.shared.checkAndUnlockAchievements()
+                        let recap = RecapInput(
+                            plannedDuration: viewModel.totalDuration,
+                            actualDuration: viewModel.elapsedTime,
+                            wasOvertimeDiscarded: false,
+                            wasPaused: viewModel.isPaused,
+                            unlockedAchievements: newlyUnlocked
+                        )
+                        recapInput = recap
+                    }) {
+                        Text("End and Save Overtime")
+                            .frame(minWidth: 160)
+                    }
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+            } else if viewModel.isRunning {
                 // Pause button
                 Button(action: {
                     let impact = UIImpactFeedbackGenerator(style: .light)
@@ -170,31 +264,23 @@ struct ActiveMeditationView: View {
                 .buttonStyle(.bordered)
                 .controlSize(.large)
                 .foregroundColor(.red)
-            } else if viewModel.isRunning && viewModel.remainingTime <= 0 {
-                // Overtime State - "Finish Session" button
-                Button(action: {
-                    let success = UINotificationFeedbackGenerator()
-                    success.notificationOccurred(.success)
-                    // Stop timer explicitly before showing recap
-                    // This creates the checkpoint and stops audio
-                    viewModel.stopTimer()
-                    showSessionRecap = true
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "checkmark.circle.fill")
-                        Text("Finish Session")
-                    }
-                    .frame(minWidth: 160)
-                }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
-                .tint(.green) // distinct color to show completion
             } else if viewModel.isCompleted {
                 // Complete button (fallback if already stopped)
                 Button(action: {
                     let impact = UIImpactFeedbackGenerator(style: .light)
                     impact.impactOccurred()
-                    showSessionRecap = true
+
+                    // Completed state: derive recap from view model
+                    let actual = viewModel.wasOvertimeDiscarded ? viewModel.totalDuration : viewModel.elapsedTime
+                    let newlyUnlocked = AchievementService.shared.checkAndUnlockAchievements()
+                    let recap = RecapInput(
+                        plannedDuration: viewModel.totalDuration,
+                        actualDuration: actual,
+                        wasOvertimeDiscarded: viewModel.wasOvertimeDiscarded,
+                        wasPaused: viewModel.isPaused,
+                        unlockedAchievements: newlyUnlocked
+                    )
+                    recapInput = recap
                 }) {
                     HStack(spacing: 8) {
                         Image(systemName: "chart.bar.fill")
@@ -233,8 +319,28 @@ struct ActiveMeditationView: View {
 
     /// End meditation early (before completion)
     private func endMeditationEarly() {
-        viewModel.stopTimer()
-        showSessionRecap = true
+        viewModel.stopTimer(suppressCompletionIfOvertime: true)
+
+        let newlyUnlocked = AchievementService.shared.checkAndUnlockAchievements()
+        let recap = RecapInput(
+            plannedDuration: viewModel.totalDuration,
+            actualDuration: viewModel.elapsedTime,
+            wasOvertimeDiscarded: false,
+            wasPaused: viewModel.isPaused,
+            unlockedAchievements: newlyUnlocked
+        )
+        recapInput = recap
+    }
+
+    /// Handle session cancellation
+    private func handleCancelSession() {
+        let impact = UIImpactFeedbackGenerator(style: .medium)
+        impact.impactOccurred()
+
+        // Cancel session (saves as invalid)
+        viewModel.cancelSession()
+
+        // Navigation pops back automatically
     }
 
     /// Handle timer completion
@@ -266,3 +372,4 @@ struct ActiveMeditationView: View {
     viewModel.stopTimer()
     return ActiveMeditationView(viewModel: viewModel)
 }
+

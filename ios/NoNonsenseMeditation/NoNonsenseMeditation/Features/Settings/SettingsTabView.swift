@@ -106,64 +106,11 @@ struct SettingsTabView: View {
 
     // MARK: - View Components
 
-    /// Statistics overview section
+    /// Statistics overview section with data source toggle
     @ViewBuilder
     private var statisticsSection: some View {
         Section {
-            VStack(spacing: Constants.Spacing.medium) {
-                StatisticRow(
-                    title: "Current Streak",
-                    value: "\(viewModel.currentStreak)",
-                    unit: viewModel.currentStreak == 1 ? "day" : "days",
-                    icon: "flame.fill",
-                    iconColor: .orange
-                )
-
-                Divider()
-
-                StatisticRow(
-                    title: "Total Sessions",
-                    value: "\(viewModel.totalSessions)",
-                    unit: "sessions",
-                    icon: "calendar",
-                    iconColor: .blue
-                )
-
-                Divider()
-
-                StatisticRow(
-                    title: "Total Time",
-                    value: viewModel.formattedTotalTime,
-                    unit: "",
-                    icon: "clock.fill",
-                    iconColor: .green
-                )
-
-                if let stats = viewModel.statistics {
-                    Divider()
-
-                    StatisticRow(
-                        title: "Average Duration",
-                        value: String(format: "%.0f", stats.averageDuration),
-                        unit: "min",
-                        icon: "chart.bar.fill",
-                        iconColor: .purple
-                    )
-
-                    if stats.longestSession > 0 {
-                        Divider()
-
-                        StatisticRow(
-                            title: "Longest Session",
-                            value: String(format: "%.0f", stats.longestSession),
-                            unit: "min",
-                            icon: "star.fill",
-                            iconColor: .yellow
-                        )
-                    }
-                }
-            }
-            .padding(.vertical, Constants.Spacing.small)
+            StatisticsDashboardView()
         } header: {
             Text("Statistics")
         }
