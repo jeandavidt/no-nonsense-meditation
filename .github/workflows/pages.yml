@@ -1,0 +1,122 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Build site
+        run: |
+          mkdir -p _site
+          cp PRIVACY.md _site/privacy.md
+          cp README.md _site/index.md
+
+          # Create a simple index.html that redirects to privacy
+          cat > _site/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>No Nonsense Meditation</title>
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                line-height: 1.6;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 2rem;
+                color: #333;
+              }
+              h1 { color: #2c3e50; }
+              a { color: #3498db; text-decoration: none; }
+              a:hover { text-decoration: underline; }
+              .links { margin-top: 2rem; }
+              .links a { display: block; margin: 0.5rem 0; }
+            </style>
+          </head>
+          <body>
+            <h1>No Nonsense Meditation</h1>
+            <p>A simple meditation timer for iOS. No accounts, no ads, no tracking.</p>
+            <div class="links">
+              <a href="privacy.html">Privacy Policy</a>
+              <a href="https://github.com/jeandavidt/no-nonsense-meditation">View on GitHub</a>
+            </div>
+          </body>
+          </html>
+          EOF
+
+          # Convert markdown to HTML using a simple approach
+          cat > _site/privacy.html << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>Privacy Policy - No Nonsense Meditation</title>
+            <style>
+              body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                line-height: 1.6;
+                max-width: 800px;
+                margin: 0 auto;
+                padding: 2rem;
+                color: #333;
+              }
+              h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 0.5rem; }
+              h2 { color: #34495e; margin-top: 2rem; }
+              h3 { color: #555; }
+              a { color: #3498db; text-decoration: none; }
+              a:hover { text-decoration: underline; }
+              ul { padding-left: 1.5rem; }
+              code { background: #f4f4f4; padding: 0.2rem 0.4rem; border-radius: 3px; }
+              hr { border: none; border-top: 1px solid #ddd; margin: 2rem 0; }
+              strong { color: #2c3e50; }
+            </style>
+          </head>
+          <body>
+          EOF
+
+          # Use pandoc if available, otherwise use a Python markdown converter
+          if command -v pandoc &> /dev/null; then
+            pandoc PRIVACY.md >> _site/privacy.html
+          else
+            # Install markdown package and convert
+            pip install markdown
+            python3 -c "import markdown; import sys; print(markdown.markdown(open('PRIVACY.md').read()))" >> _site/privacy.html
+          fi
+
+          cat >> _site/privacy.html << 'EOF'
+          </body>
+          </html>
+          EOF
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
