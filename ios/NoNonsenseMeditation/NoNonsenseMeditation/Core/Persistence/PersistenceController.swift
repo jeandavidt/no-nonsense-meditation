@@ -375,7 +375,8 @@ class PersistenceController: Sendable {
         }
 
         // CloudKit container identifier (must match entitlements)
-        let containerIdentifier = "iCloud.com.jeandavidt.NoNonsenseMeditation"
+        // Using v2 container to avoid corrupted original container
+        let containerIdentifier = "iCloud.com.jeandavidt.NoNonsenseMeditation.v2"
 
         // Configure CloudKit options
         let cloudKitOptions = NSPersistentCloudKitContainerOptions(
