@@ -207,8 +207,10 @@ struct SettingsTabView: View {
                     }
                 } label: {
                     Label("Enable Notifications", systemImage: "bell.badge")
+                        .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(.borderedProminent)
+                .listRowInsets(EdgeInsets(top: 8, leading: 16, bottom: 8, trailing: 16))
             } else if viewModel.notificationAuthStatus == .denied {
                 VStack(alignment: .leading, spacing: 8) {
                     Label("Notifications Disabled", systemImage: "bell.slash")
@@ -217,6 +219,7 @@ struct SettingsTabView: View {
                         viewModel.openSettings()
                     }
                     .buttonStyle(.bordered)
+                    .frame(maxWidth: .infinity)
                 }
             } else {
                 // Authorized - show toggle and time picker
