@@ -6,13 +6,13 @@
   <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="MIT License">
 </p>
 
-A beautifully simple meditation timer for iOS. No accounts, no ads, no distractions—just a focused meditation experience.
+A beautifully simple meditation and focus timer for iOS. No accounts, no ads, no distractions—just the stuff you need to stay mindful.
 
 ## ✨ Features
 
 ### Core Meditation
 - ⏱️ **Simple Timer**: Choose from preset durations (1-120 minutes)
-- 🎵 **Background Sounds**: Rain, ocean, forest, brown noise, and more
+- 🎵 **Background Sounds**: A few bundled in, and the option to pick from your own library.
 - 🔔 **Customizable Bells**: Different sounds for start and end of sessions
 - 📱 **Lock Screen Controls**: Pause, resume, and monitor progress without unlocking
 
