@@ -14,6 +14,7 @@ enum BackgroundSound: String, CaseIterable, Identifiable, Codable, Sendable {
     case brownNoise = "brown_noise"
     case libraryAmbience = "library_noise"
     case windChimes = "wind_chimes"
+    case userLibrary = "user_library"
 
     // MARK: - Identifiable Conformance
 
@@ -32,6 +33,8 @@ enum BackgroundSound: String, CaseIterable, Identifiable, Codable, Sendable {
             return "Library Ambience"
         case .windChimes:
             return "Wind Chimes"
+        case .userLibrary:
+            return "Music Library"
         }
     }
 
@@ -46,6 +49,8 @@ enum BackgroundSound: String, CaseIterable, Identifiable, Codable, Sendable {
             return "building.2"
         case .windChimes:
             return "wind"
+        case .userLibrary:
+            return "music.note.list"
         }
     }
 
@@ -60,6 +65,8 @@ enum BackgroundSound: String, CaseIterable, Identifiable, Codable, Sendable {
             return "Quiet study atmosphere"
         case .windChimes:
             return "Gentle chimes"
+        case .userLibrary:
+            return "Play from your library"
         }
     }
 
@@ -68,7 +75,7 @@ enum BackgroundSound: String, CaseIterable, Identifiable, Codable, Sendable {
     /// Filename for the audio resource (without extension)
     var filename: String? {
         switch self {
-        case .none:
+        case .none, .userLibrary:
             return nil
         case .brownNoise, .libraryAmbience, .windChimes:
             return rawValue
@@ -80,9 +87,19 @@ enum BackgroundSound: String, CaseIterable, Identifiable, Codable, Sendable {
         return "m4a"
     }
 
-    /// Whether this sound requires an audio file
+    /// Whether this sound requires an audio file from the bundle
     var requiresFile: Bool {
-        return self != .none
+        switch self {
+        case .none, .userLibrary:
+            return false
+        case .brownNoise, .libraryAmbience, .windChimes:
+            return true
+        }
+    }
+    
+    /// Whether this sound uses the user's music library
+    var usesUserLibrary: Bool {
+        return self == .userLibrary
     }
 }
 

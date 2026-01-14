@@ -127,6 +127,9 @@ final class SessionManager {
         )
         session.isSessionValid = actualTime >= minimumDuration
 
+        // Log session validation details
+        print("[SessionManager] Session validation: actualTime=%.2f seconds, minimumDuration=%.2f seconds, isValid=%@", actualTime, minimumDuration, session.isSessionValid ? "true" : "false")
+
         session.wasPaused = pauseCount > 0
         session.pauseCount = Int16(pauseCount)
 
@@ -183,6 +186,9 @@ final class SessionManager {
             (plannedDuration / 60.0) * Constants.Timer.minimumValidSessionPercentage * 60.0 // Convert to seconds
         )
         session.isSessionValid = actualDuration >= minimumDuration
+
+        // Log session validation details
+        print("[SessionManager] Session validation: actualDuration=%.2f seconds, minimumDuration=%.2f seconds, isValid=%@", actualDuration, minimumDuration, session.isSessionValid ? "true" : "false")
 
         session.wasPaused = wasPaused
         session.pauseCount = wasPaused ? 1 : 0

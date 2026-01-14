@@ -4,6 +4,7 @@
 //
 //  Created on 2026-01-05.
 //  Updated on 2026-01-06 - Added background sound selection
+//  Updated on 2026-01-12 - Added music library browsing
 //
 
 import SwiftUI
@@ -31,6 +32,9 @@ struct TimerSetupView: View {
 
     /// Navigation state for settings
     @State private var showSettings = false
+    
+    /// Whether to show the music picker
+    @State private var showMusicPicker = false
 
     /// Available duration options
     private let durationOptions = [1, 5, 10, 15, 20, 30, 45, 60, 90, 120]
@@ -167,10 +171,18 @@ struct TimerSetupView: View {
                     }
                 }
             }
-            .frame(maxHeight: 200)
+            .frame(maxHeight: 250)
             .padding(.vertical, 4)
             .background(Color(.systemGray6))
             .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+        .sheet(isPresented: $showMusicPicker) {
+            MusicPickerView(
+                selectedItem: $viewModel.selectedMusicLibraryItem,
+                onSelection: { item in
+                    viewModel.setMusicLibraryItem(item)
+                }
+            )
         }
     }
 
@@ -188,15 +200,34 @@ struct TimerSetupView: View {
 
                 // Name and description
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(sound.displayName)
-                        .font(.body)
-                        .foregroundColor(.primary)
-                    Text(sound.description)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                    if sound == .userLibrary, let item = viewModel.selectedMusicLibraryItem {
+                        // Show selected music item info
+                        Text(item.title)
+                            .font(.body)
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                        Text(item.subtitle)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .lineLimit(1)
+                    } else {
+                        Text(sound.displayName)
+                            .font(.body)
+                            .foregroundColor(.primary)
+                        Text(sound.description)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
 
                 Spacer()
+                
+                // Chevron for music library option
+                if sound == .userLibrary {
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
 
                 // Checkmark
                 if viewModel.selectedBackgroundSound == sound {
@@ -238,6 +269,12 @@ struct TimerSetupView: View {
         let impact = UIImpactFeedbackGenerator(style: .light)
         impact.impactOccurred()
 
+        // If user library is selected, show the music picker
+        if sound == .userLibrary {
+            showMusicPicker = true
+            return
+        }
+        
         viewModel.setBackgroundSound(sound)
 
         // Play preview if not "none"

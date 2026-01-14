@@ -186,7 +186,8 @@ struct ActiveMeditationView: View {
                             actualDuration: viewModel.totalDuration,
                             wasOvertimeDiscarded: true,
                             wasPaused: viewModel.isPaused,
-                            unlockedAchievements: newlyUnlocked
+                            unlockedAchievements: newlyUnlocked,
+                            isSessionValid: isSessionValid(plannedDuration: viewModel.totalDuration, actualDuration: viewModel.totalDuration)
                         )
                         recapInput = recap
                     }) {
@@ -211,7 +212,8 @@ struct ActiveMeditationView: View {
                             actualDuration: viewModel.elapsedTime,
                             wasOvertimeDiscarded: false,
                             wasPaused: viewModel.isPaused,
-                            unlockedAchievements: newlyUnlocked
+                            unlockedAchievements: newlyUnlocked,
+                            isSessionValid: isSessionValid(plannedDuration: viewModel.totalDuration, actualDuration: viewModel.elapsedTime)
                         )
                         recapInput = recap
                     }) {
@@ -278,8 +280,10 @@ struct ActiveMeditationView: View {
                         actualDuration: actual,
                         wasOvertimeDiscarded: viewModel.wasOvertimeDiscarded,
                         wasPaused: viewModel.isPaused,
-                        unlockedAchievements: newlyUnlocked
+                        unlockedAchievements: newlyUnlocked,
+                        isSessionValid: isSessionValid(plannedDuration: viewModel.totalDuration, actualDuration: actual)
                     )
+                    print("[ActiveMeditationView] Creating recap with actualDuration=%.2f seconds", actual)
                     recapInput = recap
                 }) {
                     HStack(spacing: 8) {
@@ -317,17 +321,32 @@ struct ActiveMeditationView: View {
 
     // MARK: - Methods
 
+    /// Check if a meditation session meets the minimum duration requirement
+    /// - Parameters:
+    ///   - plannedDuration: Planned session duration in seconds
+    ///   - actualDuration: Actual meditation time in seconds
+    /// - Returns: True if session meets minimum threshold
+    private func isSessionValid(plannedDuration: TimeInterval, actualDuration: TimeInterval) -> Bool {
+        let minimumDuration = min(
+            Constants.Timer.minimumValidSessionSeconds,
+            plannedDuration * Constants.Timer.minimumValidSessionPercentage
+        )
+        return actualDuration >= minimumDuration
+    }
+
     /// End meditation early (before completion)
     private func endMeditationEarly() {
         viewModel.stopTimer(suppressCompletionIfOvertime: true)
 
         let newlyUnlocked = AchievementService.shared.checkAndUnlockAchievements()
+        let actualMeditationTime = viewModel.elapsedTime
         let recap = RecapInput(
             plannedDuration: viewModel.totalDuration,
-            actualDuration: viewModel.elapsedTime,
+            actualDuration: actualMeditationTime,
             wasOvertimeDiscarded: false,
             wasPaused: viewModel.isPaused,
-            unlockedAchievements: newlyUnlocked
+            unlockedAchievements: newlyUnlocked,
+            isSessionValid: isSessionValid(plannedDuration: viewModel.totalDuration, actualDuration: actualMeditationTime)
         )
         recapInput = recap
     }
@@ -371,5 +390,17 @@ struct ActiveMeditationView: View {
     viewModel.startTimer(duration: 60)
     viewModel.stopTimer()
     return ActiveMeditationView(viewModel: viewModel)
+}
+
+#Preview("Short Session Recap") {
+    let recap = RecapInput(
+        plannedDuration: 300,
+        actualDuration: 10, // 10 seconds - below 15 second minimum
+        wasOvertimeDiscarded: false,
+        wasPaused: false,
+        unlockedAchievements: [],
+        isSessionValid: false
+    )
+    return SessionRecapView(recap: recap)
 }
 

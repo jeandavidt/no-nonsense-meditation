@@ -49,6 +49,9 @@ class TimerViewModel {
     /// Selected background sound
     private(set) var selectedBackgroundSound: BackgroundSound = .none
     
+    /// Selected music library item (when using user library)
+    var selectedMusicLibraryItem: MusicLibraryItem?
+    
     /// Whether the completion sound has been played for the current session
     private var hasPlayedCompletionSound = false
     
@@ -90,6 +93,7 @@ class TimerViewModel {
         self.audioService = audioService
         setupSubscriptions()
         loadBackgroundSoundPreference()
+        loadMusicLibraryItemPreference()
         setupRemoteCommandCallbacks()
     }
     
@@ -115,7 +119,10 @@ class TimerViewModel {
             await updateFromTimerService()
             
             // Start background sound if selected
-            if selectedBackgroundSound != .none {
+            if selectedBackgroundSound == .userLibrary, let musicItem = selectedMusicLibraryItem {
+                // Play from user's music library
+                try? await audioService.startUserLibraryMusic(musicItem)
+            } else if selectedBackgroundSound != .none {
                 try? await audioService.startBackgroundSound(selectedBackgroundSound)
             }
             
@@ -474,6 +481,20 @@ class TimerViewModel {
     /// Load saved background sound preference
     func loadBackgroundSoundPreference() {
         self.selectedBackgroundSound = BackgroundSound.loadFromUserDefaults()
+    }
+    
+    /// Load saved music library item preference
+    func loadMusicLibraryItemPreference() {
+        self.selectedMusicLibraryItem = MusicLibraryItem.loadFromUserDefaults()
+    }
+    
+    /// Set the music library item for the meditation session
+    /// - Parameter item: The music library item to use
+    func setMusicLibraryItem(_ item: MusicLibraryItem) {
+        self.selectedMusicLibraryItem = item
+        self.selectedBackgroundSound = .userLibrary
+        item.saveToUserDefaults()
+        BackgroundSound.userLibrary.saveToUserDefaults()
     }
     
     /// Set up remote command callbacks for lockscreen controls

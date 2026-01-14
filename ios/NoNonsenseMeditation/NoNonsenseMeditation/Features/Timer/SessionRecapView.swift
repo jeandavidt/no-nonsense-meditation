@@ -14,6 +14,7 @@ struct RecapInput: Identifiable, Hashable {
     let wasOvertimeDiscarded: Bool
     let wasPaused: Bool
     let unlockedAchievements: [Achievement]
+    let isSessionValid: Bool
 }
 
 /// View for displaying meditation session recap
@@ -36,14 +37,14 @@ struct SessionRecapView: View {
 
     init(recap: RecapInput) {
         self._recap = State(initialValue: recap)
-        
+
         // Calculate statistics from viewModel data
         // Compute deterministic statistics from the provided recap input
         let plannedDuration = recap.plannedDuration
         let actualDuration = recap.actualDuration
         let wasPaused = recap.wasPaused
-        
-        print("[SessionRecapView] init: planned=\(plannedDuration), actualUsed=\(actualDuration), wasOvertimeDiscarded=\(recap.wasOvertimeDiscarded)")
+
+        print("[SessionRecapView] init: planned=\(plannedDuration), actualUsed=\(actualDuration), wasOvertimeDiscarded=\(recap.wasOvertimeDiscarded), isSessionValid=\(recap.isSessionValid)")
 
         self._statistics = State(initialValue: SessionStatistics(
             plannedDuration: plannedDuration,
@@ -91,26 +92,26 @@ struct SessionRecapView: View {
             ZStack {
                 Circle()
                     .stroke(
-                        Color.green,
+                        recap.isSessionValid ? Color.green : Color.red,
                         style: StrokeStyle(lineWidth: 4, lineCap: .round)
                     )
                     .frame(width: 80, height: 80)
                     .scaleEffect(1.2)
                     .opacity(0.5)
 
-                Image(systemName: "checkmark.circle.fill")
+                Image(systemName: recap.isSessionValid ? "checkmark.circle.fill" : "xmark.circle.fill")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 60, height: 60)
-                    .foregroundColor(.green)
+                    .foregroundColor(recap.isSessionValid ? .green : .red)
                     .symbolEffect(.bounce, value: UUID())
             }
 
-            Text("Meditation Complete!")
+            Text(recap.isSessionValid ? "Meditation Complete!" : "Session Too Short")
                 .font(.title)
                 .fontWeight(.bold)
 
-            Text("Great job on completing your meditation session")
+            Text(recap.isSessionValid ? "Great job on completing your meditation session" : "This session was too short to count")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -327,7 +328,15 @@ struct SessionRecapView: View {
     let viewModel = TimerViewModel()
     viewModel.startTimer(duration: 300)
     viewModel.stopTimer()
-    let recap = RecapInput(plannedDuration: viewModel.totalDuration, actualDuration: viewModel.wasOvertimeDiscarded ? viewModel.totalDuration : viewModel.elapsedTime, wasOvertimeDiscarded: viewModel.wasOvertimeDiscarded, wasPaused: viewModel.isPaused, unlockedAchievements: [])
+    let actual = viewModel.wasOvertimeDiscarded ? viewModel.totalDuration : viewModel.elapsedTime
+    let recap = RecapInput(
+        plannedDuration: viewModel.totalDuration,
+        actualDuration: actual,
+        wasOvertimeDiscarded: viewModel.wasOvertimeDiscarded,
+        wasPaused: viewModel.isPaused,
+        unlockedAchievements: [],
+        isSessionValid: actual >= 15
+    )
     return SessionRecapView(recap: recap)
 }
 
@@ -335,6 +344,14 @@ struct SessionRecapView: View {
     let viewModel = TimerViewModel()
     viewModel.startTimer(duration: 60)
     viewModel.stopTimer()
-    let recap = RecapInput(plannedDuration: viewModel.totalDuration, actualDuration: viewModel.wasOvertimeDiscarded ? viewModel.totalDuration : viewModel.elapsedTime, wasOvertimeDiscarded: viewModel.wasOvertimeDiscarded, wasPaused: viewModel.isPaused, unlockedAchievements: [])
+    let actual = viewModel.wasOvertimeDiscarded ? viewModel.totalDuration : viewModel.elapsedTime
+    let recap = RecapInput(
+        plannedDuration: viewModel.totalDuration,
+        actualDuration: actual,
+        wasOvertimeDiscarded: viewModel.wasOvertimeDiscarded,
+        wasPaused: viewModel.isPaused,
+        unlockedAchievements: [],
+        isSessionValid: actual >= 15
+    )
     return SessionRecapView(recap: recap)
 }

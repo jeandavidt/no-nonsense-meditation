@@ -20,6 +20,7 @@ protocol AudioServiceProtocol: Actor {
     func playCompletionSound()
 
     func startBackgroundSound(_ sound: BackgroundSound) async throws
+    func startUserLibraryMusic(_ item: MusicLibraryItem) async throws
     func pauseBackgroundSound()
     func resumeBackgroundSound()
     func stopBackgroundSound()
@@ -69,6 +70,15 @@ actor AudioService: AudioServiceProtocol {
 
     /// Preview player for sound selection
     private var previewPlayer: AVAudioPlayer?
+    
+    /// Music library service for user library playback
+    private let musicLibraryService = MusicLibraryService.shared
+    
+    /// Whether user library music is currently playing
+    private var isPlayingUserLibraryMusic: Bool = false
+    
+    /// Currently playing music library item
+    private var currentMusicLibraryItem: MusicLibraryItem?
 
     // MARK: - Remote Control Callbacks
 
@@ -110,9 +120,10 @@ actor AudioService: AudioServiceProtocol {
         let session = AVAudioSession.sharedInstance()
 
         do {
-            // Use .playback category to ensure lockscreen controls and background audio work
-            // NO .mixWithOthers - we need to be the primary audio app for Now Playing controls
-            try session.setCategory(.playback, mode: .default, options: [])
+            // Use .playback category with mixWithOthers to allow simultaneous playback
+            // of background music and sound effects (bells)
+            // This prevents the bell sounds from ducking/overriding the music
+            try session.setCategory(.playback, mode: .default, options: [.mixWithOthers])
             try session.setActive(true)
         } catch {
             throw AudioError.playbackFailed(error)
@@ -125,7 +136,7 @@ actor AudioService: AudioServiceProtocol {
     /// - Parameter soundName: Name of the sound file (without extension)
     /// - Throws: AudioError if playback fails
     func playBell(soundName: String = "meditation_bell") async throws {
-        // Configure audio session
+        // Configure audio session - use mixWithOthers to allow simultaneous playback
         try await configureAudioSession(overrideSilent: overrideSilentMode)
 
         // Locate sound file in bundle
@@ -189,22 +200,63 @@ actor AudioService: AudioServiceProtocol {
         }
     }
 
+    /// Start playing music from the user's library
+    /// - Parameter item: The music library item to play
+    /// - Throws: Error if playback fails
+    func startUserLibraryMusic(_ item: MusicLibraryItem) async throws {
+        // Stop any currently playing background sound
+        stopBackgroundSound()
+        
+        // Configure audio session
+        try await configureAudioSession(overrideSilent: overrideSilentMode)
+        
+        // Start playback via music library service
+        try await musicLibraryService.startPlayback(item: item)
+        
+        self.currentBackgroundSound = .userLibrary
+        self.isPlayingUserLibraryMusic = true
+        self.currentMusicLibraryItem = item
+    }
+
     /// Stop the currently playing background sound
     func stopBackgroundSound() {
+        // Stop AVAudioPlayer-based background sounds
         backgroundPlayer?.stop()
         backgroundPlayer = nil
+        
+        // Stop user library music if playing or if it was paused
+        if isPlayingUserLibraryMusic {
+            Task {
+                await musicLibraryService.stopPlayback()
+            }
+            isPlayingUserLibraryMusic = false
+            currentMusicLibraryItem = nil
+        }
+        
         currentBackgroundSound = .none
         clearNowPlayingInfo()
     }
 
     /// Pause the currently playing background sound
     func pauseBackgroundSound() {
-        backgroundPlayer?.pause()
+        if isPlayingUserLibraryMusic {
+            Task {
+                await musicLibraryService.pausePlayback()
+            }
+        } else {
+            backgroundPlayer?.pause()
+        }
     }
 
     /// Resume the currently playing background sound
     func resumeBackgroundSound() {
-        backgroundPlayer?.play()
+        if isPlayingUserLibraryMusic {
+            Task {
+                await musicLibraryService.resumePlayback()
+            }
+        } else {
+            backgroundPlayer?.play()
+        }
     }
 
     /// Get the currently playing background sound

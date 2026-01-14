@@ -4,6 +4,8 @@
 <dict>
 	<key>CFBundleIconFile</key>
 	<string>NoNonsense</string>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>No Nonsense Meditation would like to access your music library to play your favorite songs or playlists during meditation sessions.</string>
 	<key>NSUserNotificationUsageDescription</key>
 	<string>No Nonsense Meditation would like to send you daily reminders to help you maintain your meditation practice.</string>
 	<key>UIApplicationSceneManifest</key>
