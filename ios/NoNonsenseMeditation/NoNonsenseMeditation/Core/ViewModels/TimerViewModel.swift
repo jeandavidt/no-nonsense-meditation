@@ -67,6 +67,9 @@ class TimerViewModel {
     /// Whether overtime was discarded (user clicked "End Session" during overtime)
     private(set) var wasOvertimeDiscarded: Bool = false
 
+    /// Current session type (meditation or focus)
+    var sessionType: SessionType = .meditation
+
     /// Last time we updated lockscreen info — used to throttle expensive updates
     private var lastLockscreenUpdate: Date?
     
@@ -102,7 +105,17 @@ class TimerViewModel {
     /// Start a new timer with the specified duration
     /// - Parameter duration: Total duration in seconds
     func startTimer(duration: TimeInterval) {
+        startTimer(duration: duration, sessionType: .meditation)
+    }
+
+    /// Start a new timer with the specified duration and session type
+    /// - Parameter duration: Total duration in seconds
+    /// - Parameter sessionType: The type of session (meditation or focus)
+    func startTimer(duration: TimeInterval, sessionType: SessionType) {
         Task {
+            // Set session type
+            self.sessionType = sessionType
+
             // Reset state
             self.state = .idle
             self.remainingTime = duration
@@ -110,14 +123,14 @@ class TimerViewModel {
             self.elapsedTime = 0
             self.progress = 0
             self.formattedTime = formatTime(duration)
-            
+
             // Record session start time for HealthKit accuracy
             self.sessionStartTime = Date()
-            
+
             // Start timer service
             await timerService.startTimer(duration: duration)
             await updateFromTimerService()
-            
+
             // Start background sound if selected
             if selectedBackgroundSound == .userLibrary, let musicItem = selectedMusicLibraryItem {
                 // Play from user's music library
@@ -125,16 +138,16 @@ class TimerViewModel {
             } else if selectedBackgroundSound != .none {
                 try? await audioService.startBackgroundSound(selectedBackgroundSound)
             }
-            
+
             // Play start sound
             try? await audioService.playStartSound()
-            
+
             // Schedule completion notification
             await notificationService.scheduleCompletionNotification(for: duration)
-            
+
             // Update state
             self.state = .running
-            
+
             // Update lockscreen info
             await updateLockscreenInfo()
         }
@@ -221,7 +234,8 @@ class TimerViewModel {
                 plannedDuration: totalDuration,
                 actualDuration: actualMeditationTime,
                 wasPaused: state == .paused,
-                startDate: sessionStartTime  // Pass actual start time for accurate HealthKit duration
+                startDate: sessionStartTime,  // Pass actual start time for accurate HealthKit duration
+                sessionType: sessionType
             )
 
             // Update state
@@ -296,7 +310,8 @@ class TimerViewModel {
                 plannedDuration: totalDuration,
                 actualDuration: totalDuration, // Use planned, not actual elapsed time
                 wasPaused: state == .paused,
-                startDate: sessionStartTime
+                startDate: sessionStartTime,
+                sessionType: sessionType
             )
             
             // Reset state

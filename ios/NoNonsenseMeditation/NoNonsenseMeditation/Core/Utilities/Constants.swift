@@ -42,6 +42,26 @@ enum Constants {
 
         /// Timer update interval in seconds
         static let updateInterval: TimeInterval = 1.0
+
+        // MARK: - Focus Session Constants
+
+        /// Default focus session duration in minutes
+        static let defaultFocusDuration = 25
+
+        /// Minimum focus session duration in minutes
+        static let minimumFocusDuration = 5
+
+        /// Maximum focus session duration in minutes
+        static let maximumFocusDuration = 180
+
+        /// Preset focus duration options in minutes
+        static let focusPresetDurations = [15, 25, 45, 60, 90, 120]
+
+        /// Minimum focus session duration to be considered valid (in seconds)
+        static let minimumValidFocusSessionSeconds: TimeInterval = 60
+
+        /// Minimum focus session percentage to be considered valid (50% of planned duration for focus)
+        static let minimumValidFocusSessionPercentage: Double = 0.50
     }
 
     // MARK: - Colors

@@ -3,6 +3,7 @@
 //  NoNonsenseMeditation
 //
 //  Created on 2026-01-05.
+//  Updated on 2026-01-14 - Added session type support for focus sessions
 //
 
 import SwiftUI
@@ -16,6 +17,9 @@ struct ActiveMeditationView: View {
     /// ViewModel for timer state management
     @State private var viewModel: TimerViewModel
 
+    /// Session type (meditation or focus)
+    private let sessionType: SessionType
+
     /// Navigation state
     @State private var recapInput: RecapInput? = nil
 
@@ -24,8 +28,9 @@ struct ActiveMeditationView: View {
 
     // MARK: - Initialization
 
-    init(viewModel: TimerViewModel) {
+    init(viewModel: TimerViewModel, sessionType: SessionType = .meditation) {
         self._viewModel = State(initialValue: viewModel)
+        self.sessionType = sessionType
     }
 
     // MARK: - View Body
@@ -55,7 +60,7 @@ struct ActiveMeditationView: View {
             }
         }
         .confirmationDialog(
-            "Cancel Meditation?",
+            "Cancel \(sessionType.displayName)?",
             isPresented: $showCancelConfirmation,
             titleVisibility: .visible
         ) {
@@ -102,10 +107,14 @@ struct ActiveMeditationView: View {
 
             Spacer()
 
-            // Title
-            Text("Meditation in Progress")
-                .font(.headline)
-                .foregroundColor(.primary)
+            // Title based on session type
+            HStack(spacing: 8) {
+                Image(systemName: sessionType.iconName)
+                    .foregroundColor(sessionType.color)
+                Text("\(sessionType.displayName) in Progress")
+                    .font(.headline)
+                    .foregroundColor(.primary)
+            }
 
             Spacer()
 
@@ -187,7 +196,8 @@ struct ActiveMeditationView: View {
                             wasOvertimeDiscarded: true,
                             wasPaused: viewModel.isPaused,
                             unlockedAchievements: newlyUnlocked,
-                            isSessionValid: isSessionValid(plannedDuration: viewModel.totalDuration, actualDuration: viewModel.totalDuration)
+                            isSessionValid: isSessionValid(plannedDuration: viewModel.totalDuration, actualDuration: viewModel.totalDuration),
+                            sessionType: sessionType
                         )
                         recapInput = recap
                     }) {
@@ -213,7 +223,8 @@ struct ActiveMeditationView: View {
                             wasOvertimeDiscarded: false,
                             wasPaused: viewModel.isPaused,
                             unlockedAchievements: newlyUnlocked,
-                            isSessionValid: isSessionValid(plannedDuration: viewModel.totalDuration, actualDuration: viewModel.elapsedTime)
+                            isSessionValid: isSessionValid(plannedDuration: viewModel.totalDuration, actualDuration: viewModel.elapsedTime),
+                            sessionType: sessionType
                         )
                         recapInput = recap
                     }) {
@@ -281,7 +292,8 @@ struct ActiveMeditationView: View {
                         wasOvertimeDiscarded: viewModel.wasOvertimeDiscarded,
                         wasPaused: viewModel.isPaused,
                         unlockedAchievements: newlyUnlocked,
-                        isSessionValid: isSessionValid(plannedDuration: viewModel.totalDuration, actualDuration: actual)
+                        isSessionValid: isSessionValid(plannedDuration: viewModel.totalDuration, actualDuration: actual),
+                        sessionType: sessionType
                     )
                     print("[ActiveMeditationView] Creating recap with actualDuration=%.2f seconds", actual)
                     recapInput = recap
@@ -346,7 +358,8 @@ struct ActiveMeditationView: View {
             wasOvertimeDiscarded: false,
             wasPaused: viewModel.isPaused,
             unlockedAchievements: newlyUnlocked,
-            isSessionValid: isSessionValid(plannedDuration: viewModel.totalDuration, actualDuration: actualMeditationTime)
+            isSessionValid: isSessionValid(plannedDuration: viewModel.totalDuration, actualDuration: actualMeditationTime),
+            sessionType: sessionType
         )
         recapInput = recap
     }

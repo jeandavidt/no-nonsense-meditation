@@ -45,6 +45,9 @@ struct StatisticsHeaderView: View {
 
     var body: some View {
         VStack(spacing: Constants.Spacing.medium) {
+            // Section header with title
+            sectionHeader
+            
             // Main statistics grid
             mainStatisticsGrid
 
@@ -65,6 +68,17 @@ struct StatisticsHeaderView: View {
     }
 
     // MARK: - Subviews
+
+    /// Section header with title
+    private var sectionHeader: some View {
+        HStack {
+            Image(systemName: "brain.head.profile")
+                .foregroundColor(.orange)
+            Text("Meditation Sessions")
+                .font(.headline)
+            Spacer()
+        }
+    }
 
     /// Main statistics grid with three key metrics
     private var mainStatisticsGrid: some View {

@@ -61,6 +61,16 @@ final class SessionManager {
     /// - Returns: The newly created session
     @discardableResult
     func startSession(configuration: TimerConfiguration) async -> MeditationSession {
+        return await startSession(configuration: configuration, sessionType: .meditation)
+    }
+
+    /// Start a new session with specified type
+    /// - Parameters:
+    ///   - configuration: Timer configuration for the session
+    ///   - sessionType: The type of session (meditation or focus)
+    /// - Returns: The newly created session
+    @discardableResult
+    func startSession(configuration: TimerConfiguration, sessionType: SessionType) async -> MeditationSession {
         // Create new session in CoreData
         let context = persistenceController.viewContext
         let session = MeditationSession(context: context)
@@ -71,6 +81,7 @@ final class SessionManager {
         session.isSessionValid = false // Will be set when completed
         session.wasPaused = false
         session.pauseCount = 0
+        session.sessionType = sessionType.rawValue
         session.syncedToHealthKit = false
         session.syncedToiCloud = false
 
@@ -144,8 +155,8 @@ final class SessionManager {
         // Save context
         try persistenceController.saveContext()
 
-        // Sync to HealthKit if authorized and session is valid
-        if session.isSessionValid {
+        // Sync to HealthKit if authorized, session is valid, and it's NOT a focus session
+        if session.isSessionValid && session.sessionType != "focus" {
             await syncToHealthKit(session: session)
         }
 
@@ -165,10 +176,11 @@ final class SessionManager {
     ///   - actualDuration: Actual meditation time in seconds
     ///   - wasPaused: Whether the session was paused
     ///   - startDate: When the meditation session started (for accurate HealthKit duration)
+    ///   - sessionType: The type of session (meditation or focus)
     /// - Returns: The completed session
     /// - Note: Returns NSManagedObject which is not Sendable, but safe to use with CoreData context
     @discardableResult
-    func completeSession(plannedDuration: TimeInterval, actualDuration: TimeInterval, wasPaused: Bool, startDate: Date? = nil) async -> MeditationSession? {
+    func completeSession(plannedDuration: TimeInterval, actualDuration: TimeInterval, wasPaused: Bool, startDate: Date? = nil, sessionType: SessionType = .meditation) async -> MeditationSession? {
         // Create new session in CoreData
         let context = persistenceController.viewContext
         let session = MeditationSession(context: context)
@@ -192,6 +204,7 @@ final class SessionManager {
 
         session.wasPaused = wasPaused
         session.pauseCount = wasPaused ? 1 : 0
+        session.sessionType = sessionType.rawValue
         session.syncedToHealthKit = false
         session.syncedToiCloud = false
 
@@ -206,8 +219,8 @@ final class SessionManager {
         // Save context
         try? persistenceController.saveContext()
 
-        // Sync to HealthKit if authorized and session is valid
-        if session.isSessionValid {
+        // Sync to HealthKit if authorized, session is valid, and it's NOT a focus session
+        if session.isSessionValid && session.sessionType != "focus" {
             await syncToHealthKit(session: session)
         }
 

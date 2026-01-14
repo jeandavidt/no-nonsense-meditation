@@ -3,6 +3,7 @@
 //  NoNonsenseMeditation
 //
 //  Created on 2026-01-05.
+//  Updated on 2026-01-14 - Added session type support for focus sessions
 //
 
 import SwiftUI
@@ -15,6 +16,26 @@ struct RecapInput: Identifiable, Hashable {
     let wasPaused: Bool
     let unlockedAchievements: [Achievement]
     let isSessionValid: Bool
+    let sessionType: SessionType
+
+    /// Default initializer for meditation sessions
+    init(
+        plannedDuration: TimeInterval,
+        actualDuration: TimeInterval,
+        wasOvertimeDiscarded: Bool,
+        wasPaused: Bool,
+        unlockedAchievements: [Achievement],
+        isSessionValid: Bool,
+        sessionType: SessionType = .meditation
+    ) {
+        self.plannedDuration = plannedDuration
+        self.actualDuration = actualDuration
+        self.wasOvertimeDiscarded = wasOvertimeDiscarded
+        self.wasPaused = wasPaused
+        self.unlockedAchievements = unlockedAchievements
+        self.isSessionValid = isSessionValid
+        self.sessionType = sessionType
+    }
 }
 
 /// View for displaying meditation session recap
@@ -92,31 +113,41 @@ struct SessionRecapView: View {
             ZStack {
                 Circle()
                     .stroke(
-                        recap.isSessionValid ? Color.green : Color.red,
+                        recap.isSessionValid ? recap.sessionType.color : Color.red,
                         style: StrokeStyle(lineWidth: 4, lineCap: .round)
                     )
                     .frame(width: 80, height: 80)
                     .scaleEffect(1.2)
                     .opacity(0.5)
 
-                Image(systemName: recap.isSessionValid ? "checkmark.circle.fill" : "xmark.circle.fill")
+                Image(systemName: recap.isSessionValid ? recap.sessionType.completionIconName : "xmark.circle.fill")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 60, height: 60)
-                    .foregroundColor(recap.isSessionValid ? .green : .red)
+                    .foregroundColor(recap.isSessionValid ? recap.sessionType.color : .red)
                     .symbolEffect(.bounce, value: UUID())
             }
 
-            Text(recap.isSessionValid ? "Meditation Complete!" : "Session Too Short")
+            Text(recap.isSessionValid ? "\(recap.sessionType.displayName) Complete!" : "Session Too Short")
                 .font(.title)
                 .fontWeight(.bold)
 
-            Text(recap.isSessionValid ? "Great job on completing your meditation session" : "This session was too short to count")
+            Text(recap.isSessionValid ? sessionCompleteMessage : "This session was too short to count")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }
         .padding(.top, 16)
+    }
+
+    /// Returns the appropriate completion message based on session type
+    private var sessionCompleteMessage: String {
+        switch recap.sessionType {
+        case .meditation:
+            return "Great job on completing your meditation session"
+        case .focus:
+            return "Great job on completing your focus session"
+        }
     }
 
     /// Summary card with key metrics
@@ -335,14 +366,15 @@ struct SessionRecapView: View {
         wasOvertimeDiscarded: viewModel.wasOvertimeDiscarded,
         wasPaused: viewModel.isPaused,
         unlockedAchievements: [],
-        isSessionValid: actual >= 15
+        isSessionValid: actual >= 15,
+        sessionType: .meditation
     )
     return SessionRecapView(recap: recap)
 }
 
-#Preview("Short Session") {
+#Preview("Focus Session Recap") {
     let viewModel = TimerViewModel()
-    viewModel.startTimer(duration: 60)
+    viewModel.startTimer(duration: 1500) // 25 minutes for focus
     viewModel.stopTimer()
     let actual = viewModel.wasOvertimeDiscarded ? viewModel.totalDuration : viewModel.elapsedTime
     let recap = RecapInput(
@@ -351,7 +383,8 @@ struct SessionRecapView: View {
         wasOvertimeDiscarded: viewModel.wasOvertimeDiscarded,
         wasPaused: viewModel.isPaused,
         unlockedAchievements: [],
-        isSessionValid: actual >= 15
+        isSessionValid: actual >= 15,
+        sessionType: .focus
     )
     return SessionRecapView(recap: recap)
 }

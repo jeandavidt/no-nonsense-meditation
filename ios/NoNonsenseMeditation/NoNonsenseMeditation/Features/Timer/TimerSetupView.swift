@@ -5,6 +5,7 @@
 //  Created on 2026-01-05.
 //  Updated on 2026-01-06 - Added background sound selection
 //  Updated on 2026-01-12 - Added music library browsing
+//  Updated on 2026-01-14 - Added focus session support
 //
 
 import SwiftUI
@@ -30,9 +31,12 @@ struct TimerSetupView: View {
     /// Navigation state for meditation
     @State private var isActive = false
 
+    /// Navigation state for focus session
+    @State private var isFocusActive = false
+
     /// Navigation state for settings
     @State private var showSettings = false
-    
+
     /// Whether to show the music picker
     @State private var showMusicPicker = false
 
@@ -63,11 +67,11 @@ struct TimerSetupView: View {
                 backgroundSoundSection
                     .padding(.bottom, 32)
 
-                // Start Button (always visible)
+                // Start Buttons
                 startButtonSection
             }
             .padding()
-            .navigationTitle("Setup Meditation")
+            .navigationTitle("Setup")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
@@ -80,7 +84,10 @@ struct TimerSetupView: View {
                 }
             }
             .navigationDestination(isPresented: $isActive) {
-                ActiveMeditationView(viewModel: viewModel)
+                ActiveMeditationView(viewModel: viewModel, sessionType: .meditation)
+            }
+            .navigationDestination(isPresented: $isFocusActive) {
+                ActiveMeditationView(viewModel: viewModel, sessionType: .focus)
             }
             .navigationDestination(isPresented: $showSettings) {
                 SettingsTabView()
@@ -243,18 +250,38 @@ struct TimerSetupView: View {
         .buttonStyle(.plain)
     }
 
-    /// Start button section with enhanced visual separation
+    /// Start button section with both meditation and focus buttons
     private var startButtonSection: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 12) {
+            // Meditation button
             Button(action: {
                 startMeditation()
             }) {
-                Text("Start Meditation")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding()
+                HStack {
+                    Image(systemName: "leaf.fill")
+                    Text("Start Meditation")
+                }
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding()
             }
             .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .disabled(selectedDuration <= 0)
+
+            // Focus session button
+            Button(action: {
+                startFocusSession()
+            }) {
+                HStack {
+                    Image(systemName: "brain.head.profile")
+                    Text("Start Focus Session")
+                }
+                .font(.headline)
+                .frame(maxWidth: .infinity)
+                .padding()
+            }
+            .buttonStyle(.bordered)
             .controlSize(.large)
             .disabled(selectedDuration <= 0)
         }
@@ -297,11 +324,30 @@ struct TimerSetupView: View {
         // Stop any preview playback
         viewModel.stopPreview()
 
-        // Start timer
-        viewModel.startTimer(duration: durationInSeconds)
+        // Start timer with meditation session type
+        viewModel.startTimer(duration: durationInSeconds, sessionType: .meditation)
 
         // Navigate to active meditation view
         isActive = true
+    }
+
+    /// Start focus session with selected duration
+    private func startFocusSession() {
+        // Validate duration
+        guard selectedDuration > 0 else { return }
+
+        // Haptic feedback
+        let impact = UIImpactFeedbackGenerator(style: .medium)
+        impact.impactOccurred()
+
+        // Stop any preview playback
+        viewModel.stopPreview()
+
+        // Start timer with focus session type
+        viewModel.startTimer(duration: durationInSeconds, sessionType: .focus)
+
+        // Navigate to active meditation view
+        isFocusActive = true
     }
 
     /// Handle pending intent actions from App Intents (Shortcuts, Siri)

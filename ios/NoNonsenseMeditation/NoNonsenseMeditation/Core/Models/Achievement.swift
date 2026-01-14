@@ -12,6 +12,9 @@ enum AchievementType: String, Codable, CaseIterable, Identifiable {
     case totalSessions
     case streak
     case totalMinutes
+    case focusTotalSessions
+    case focusStreak
+    case focusTotalMinutes
 
     var id: String { rawValue }
 }
@@ -64,7 +67,10 @@ extension Achievement {
     static let allAchievements: [Achievement] = [
         totalSessionsAchievements,
         streakAchievements,
-        minutesAchievements
+        minutesAchievements,
+        focusSessionsAchievements,
+        focusStreakAchievements,
+        focusMinutesAchievements
     ].flatMap { $0 }
 
     static let totalSessionsAchievements: [Achievement] = [
@@ -235,6 +241,152 @@ extension Achievement {
             iconName: "sun.max.circle.fill",
             iconColor: "yellow",
             threshold: 1440
+        )
+    ]
+
+    // MARK: - Focus Session Achievements
+
+    static let focusSessionsAchievements: [Achievement] = [
+        Achievement(
+            id: "first_focus_session",
+            type: .focusTotalSessions,
+            name: "First Focus",
+            description: "Complete your first focus session",
+            iconName: "brain.head.profile",
+            iconColor: "orange",
+            threshold: 1
+        ),
+        Achievement(
+            id: "five_focus_sessions",
+            type: .focusTotalSessions,
+            name: "Focused Flow",
+            description: "Complete 5 focus sessions",
+            iconName: "bolt.fill",
+            iconColor: "yellow",
+            threshold: 5
+        ),
+        Achievement(
+            id: "ten_focus_sessions",
+            type: .focusTotalSessions,
+            name: "Deep Work",
+            description: "Complete 10 focus sessions",
+            iconName: "sparkle.magnifyingglass",
+            iconColor: "purple",
+            threshold: 10
+        ),
+        Achievement(
+            id: "twenty_five_focus_sessions",
+            type: .focusTotalSessions,
+            name: "Concentration Master",
+            description: "Complete 25 focus sessions",
+            iconName: "scope",
+            iconColor: "teal",
+            threshold: 25
+        ),
+        Achievement(
+            id: "fifty_focus_sessions",
+            type: .focusTotalSessions,
+            name: "Productivity Pro",
+            description: "Complete 50 focus sessions",
+            iconName: "chart.line.uptrend.xyaxis",
+            iconColor: "green",
+            threshold: 50
+        ),
+        Achievement(
+            id: "hundred_focus_sessions",
+            type: .focusTotalSessions,
+            name: "Focus Champion",
+            description: "Complete 100 focus sessions",
+            iconName: "trophy.fill",
+            iconColor: "gold",
+            threshold: 100
+        )
+    ]
+
+    static let focusStreakAchievements: [Achievement] = [
+        Achievement(
+            id: "three_day_focus_streak",
+            type: .focusStreak,
+            name: "Focus Starter",
+            description: "Maintain a 3-day focus streak",
+            iconName: "brain",
+            iconColor: "orange",
+            threshold: 3
+        ),
+        Achievement(
+            id: "seven_day_focus_streak",
+            type: .focusStreak,
+            name: "Weekly Warrior",
+            description: "Maintain a 7-day focus streak",
+            iconName: "calendar.badge.checkmark",
+            iconColor: "yellow",
+            threshold: 7
+        ),
+        Achievement(
+            id: "fourteen_day_focus_streak",
+            type: .focusStreak,
+            name: "Two Week Focus",
+            description: "Maintain a 14-day focus streak",
+            iconName: "target",
+            iconColor: "red",
+            threshold: 14
+        ),
+        Achievement(
+            id: "thirty_day_focus_streak",
+            type: .focusStreak,
+            name: "Focus Month",
+            description: "Maintain a 30-day focus streak",
+            iconName: "calendar",
+            iconColor: "purple",
+            threshold: 30
+        )
+    ]
+
+    static let focusMinutesAchievements: [Achievement] = [
+        Achievement(
+            id: "one_hour_focus",
+            type: .focusTotalMinutes,
+            name: "One Hour Deep Work",
+            description: "Focus for 60 total minutes",
+            iconName: "timer",
+            iconColor: "orange",
+            threshold: 60
+        ),
+        Achievement(
+            id: "three_hours_focus",
+            type: .focusTotalMinutes,
+            name: "Three Hour Focus",
+            description: "Focus for 180 total minutes",
+            iconName: "clock.fill",
+            iconColor: "yellow",
+            threshold: 180
+        ),
+        Achievement(
+            id: "five_hours_focus",
+            type: .focusTotalMinutes,
+            name: "Five Hours Flow",
+            description: "Focus for 300 total minutes",
+            iconName: "hourglass",
+            iconColor: "purple",
+            threshold: 300
+        ),
+        Achievement(
+            id: "ten_hours_focus",
+            type: .focusTotalMinutes,
+            name: "Ten Hours Mastery",
+            description: "Focus for 600 total minutes",
+            iconName: "mountain.2.fill",
+            iconColor: "teal",
+            threshold: 600
+        ),
+        Achievement(
+            id: "twenty_five_hours_focus",
+            type: .focusTotalMinutes,
+            name: "Quarter Century Focus",
+            description: "Focus for 1500 total minutes",
+            iconName: "star.fill",
+            iconColor: "gold",
+            threshold: 1500
         )
     ]
 }

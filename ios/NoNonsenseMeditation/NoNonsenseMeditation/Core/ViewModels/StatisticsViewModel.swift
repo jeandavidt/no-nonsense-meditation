@@ -93,6 +93,40 @@ class StatisticsViewModel {
         }
     }
 
+    /// Load focus-specific statistics
+    func loadFocusStatistics() async {
+        isLoading = true
+        error = nil
+
+        do {
+            let focusStats = try await coreDataSource.calculateFocusStatistics()
+            // Merge focus stats into existing statistics
+            statistics = SessionStatistics(
+                todayMinutes: statistics.todayMinutes,
+                thisWeekMinutes: statistics.thisWeekMinutes,
+                currentStreak: statistics.currentStreak,
+                totalMinutes: statistics.totalMinutes,
+                totalSessions: statistics.totalSessions,
+                averageSessionDuration: statistics.averageSessionDuration,
+                longestSessionDuration: statistics.longestSessionDuration,
+                lastSessionDate: statistics.lastSessionDate,
+                plannedDuration: statistics.plannedDuration,
+                actualDuration: statistics.actualDuration,
+                wasPaused: statistics.wasPaused,
+                focusTodayMinutes: focusStats.todayMinutes,
+                focusThisWeekMinutes: focusStats.thisWeekMinutes,
+                focusCurrentStreak: focusStats.currentStreak,
+                focusTotalMinutes: focusStats.totalMinutes,
+                focusTotalSessions: focusStats.totalSessions,
+                focusAverageSessionDuration: focusStats.averageSessionDuration
+            )
+            isLoading = false
+        } catch {
+            self.error = error
+            isLoading = false
+        }
+    }
+
     /// Switch data source mode
     func setDataSourceMode(_ mode: DataSourceMode) async {
         // Check if HealthKit available for All Apps mode

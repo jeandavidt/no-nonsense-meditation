@@ -306,6 +306,9 @@ extension AchievementType {
         case .totalSessions: return "Sessions"
         case .streak: return "Streak"
         case .totalMinutes: return "Minutes"
+        case .focusTotalSessions: return "Focus Sessions"
+        case .focusStreak: return "Focus Streak"
+        case .focusTotalMinutes: return "Focus Minutes"
         }
     }
 
@@ -314,6 +317,9 @@ extension AchievementType {
         case .totalSessions: return "sessions"
         case .streak: return "days"
         case .totalMinutes: return "minutes"
+        case .focusTotalSessions: return "focus sessions"
+        case .focusStreak: return "days"
+        case .focusTotalMinutes: return "focus minutes"
         }
     }
 }

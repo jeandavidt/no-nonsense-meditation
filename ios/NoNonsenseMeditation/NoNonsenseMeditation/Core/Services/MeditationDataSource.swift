@@ -12,6 +12,9 @@ protocol MeditationDataSource: Sendable {
     /// Calculate statistics from available data
     func calculateStatistics() async throws -> SessionStatistics
 
+    /// Calculate focus-specific statistics
+    func calculateFocusStatistics() async throws -> SessionStatistics
+
     /// Calculate current streak
     func calculateCurrentStreak() async throws -> Int
 

@@ -3,6 +3,7 @@
 //  NoNonsenseMeditation
 //
 //  Created on 2026-01-05.
+//  Updated on 2026-01-14 - Added focus session statistics
 //
 
 import Foundation
@@ -37,6 +38,26 @@ struct SessionStatistics: Sendable {
     /// Date of the last completed session
     let lastSessionDate: Date?
 
+    // MARK: - Focus-Specific Properties
+
+    /// Total focus minutes today
+    let focusTodayMinutes: Double
+
+    /// Total focus minutes this week
+    let focusThisWeekMinutes: Double
+
+    /// Current focus session streak
+    let focusCurrentStreak: Int
+
+    /// Total focus minutes all-time
+    let focusTotalMinutes: Double
+
+    /// Total focus sessions completed
+    let focusTotalSessions: Int
+
+    /// Average focus session duration
+    let focusAverageSessionDuration: Double
+
     // MARK: - Session-Specific Properties
 
     /// Planned duration for this session in seconds
@@ -68,6 +89,17 @@ struct SessionStatistics: Sendable {
             return "1 day"
         } else {
             return "\(currentStreak) days"
+        }
+    }
+
+    /// Formatted focus streak display string
+    var focusStreakDisplayString: String {
+        if focusCurrentStreak == 0 {
+            return "No focus streak"
+        } else if focusCurrentStreak == 1 {
+            return "1 day"
+        } else {
+            return "\(focusCurrentStreak) days"
         }
     }
 
@@ -132,7 +164,14 @@ struct SessionStatistics: Sendable {
         lastSessionDate: Date? = nil,
         plannedDuration: TimeInterval = 0,
         actualDuration: TimeInterval = 0,
-        wasPaused: Bool = false
+        wasPaused: Bool = false,
+        // Focus-specific parameters
+        focusTodayMinutes: Double = 0,
+        focusThisWeekMinutes: Double = 0,
+        focusCurrentStreak: Int = 0,
+        focusTotalMinutes: Double = 0,
+        focusTotalSessions: Int = 0,
+        focusAverageSessionDuration: Double = 0
     ) {
         self.todayMinutes = todayMinutes
         self.thisWeekMinutes = thisWeekMinutes
@@ -145,6 +184,12 @@ struct SessionStatistics: Sendable {
         self.plannedDuration = plannedDuration
         self.actualDuration = actualDuration
         self.wasPaused = wasPaused
+        self.focusTodayMinutes = focusTodayMinutes
+        self.focusThisWeekMinutes = focusThisWeekMinutes
+        self.focusCurrentStreak = focusCurrentStreak
+        self.focusTotalMinutes = focusTotalMinutes
+        self.focusTotalSessions = focusTotalSessions
+        self.focusAverageSessionDuration = focusAverageSessionDuration
     }
 
     // MARK: - Static Factory

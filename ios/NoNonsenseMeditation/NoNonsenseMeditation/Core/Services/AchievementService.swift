@@ -40,14 +40,33 @@ class AchievementService {
     }
 
     func checkAndUnlockAchievements() -> [Achievement] {
+        return checkAndUnlockAchievements(for: nil)
+    }
+
+    /// Check and unlock achievements for a specific session type
+    /// - Parameter sessionType: The session type to check achievements for, or nil for all
+    /// - Returns: Array of newly unlocked achievements
+    func checkAndUnlockAchievements(for sessionType: SessionType?) -> [Achievement] {
         var newlyUnlocked: [Achievement] = []
 
         do {
-            let sessions = try sessionService.fetchValidSessions()
+            let sessions: [MeditationSession]
+            let focusSessions: [MeditationSession]
+
+            if let specificType = sessionType {
+                sessions = try sessionService.fetchValidSessions(byType: specificType)
+                focusSessions = specificType == .focus ? sessions : []
+            } else {
+                sessions = try sessionService.fetchValidSessions()
+                focusSessions = try sessionService.fetchValidSessions(byType: .focus)
+            }
+
             let totalMinutes = sessions.reduce(0) { $0 + $1.durationTotal }
+            let focusTotalMinutes = focusSessions.reduce(0) { $0 + $1.durationTotal }
 
             let streakCalculator = StreakCalculator()
             let streak = streakCalculator.calculateCurrentStreak(from: sessions)
+            let focusStreak = streakCalculator.calculateCurrentStreak(from: focusSessions)
 
             let allAchievements = Achievement.allAchievements
 
@@ -64,6 +83,12 @@ class AchievementService {
                     isUnlocked = streak >= achievement.threshold
                 case .totalMinutes:
                     isUnlocked = Int(totalMinutes) >= achievement.threshold
+                case .focusTotalSessions:
+                    isUnlocked = focusSessions.count >= achievement.threshold
+                case .focusStreak:
+                    isUnlocked = focusStreak >= achievement.threshold
+                case .focusTotalMinutes:
+                    isUnlocked = Int(focusTotalMinutes) >= achievement.threshold
                 }
 
                 if isUnlocked {

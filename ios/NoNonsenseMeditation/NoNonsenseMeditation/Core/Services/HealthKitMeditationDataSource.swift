@@ -26,7 +26,7 @@ final class HealthKitMeditationDataSource: MeditationDataSource {
         // Convert to normalized format
         let sessions = samples.map { sample in
             let duration = sample.endDate.timeIntervalSince(sample.startDate) / 60.0
-            return MeditationSessionData(
+            let session = MeditationSessionData(
                 id: UUID(uuidString: sample.uuid.uuidString) ?? UUID(),
                 createdAt: sample.startDate,
                 completedAt: sample.endDate,
@@ -34,7 +34,15 @@ final class HealthKitMeditationDataSource: MeditationDataSource {
                 isValid: duration >= 0.25, // 15 seconds minimum
                 source: .healthKit
             )
+            #if DEBUG
+            print("[HealthKitDS] Sample: duration=\(String(format: "%.2f", duration))min, isValid=\(session.isValid), date=\(sample.startDate)")
+            #endif
+            return session
         }.filter { $0.isValid }
+        
+        #if DEBUG
+        print("[HealthKitDS] Total HealthKit samples: \(samples.count), Valid sessions: \(sessions.count)")
+        #endif
 
         // Calculate date ranges
         let calendar = Calendar.current
@@ -57,7 +65,11 @@ final class HealthKitMeditationDataSource: MeditationDataSource {
 
         let currentStreak = calculateCurrentStreakFromSessions(sessions)
         let lastDate = sessions.sorted(by: { $0.createdAt > $1.createdAt }).first?.createdAt
-
+        
+        #if DEBUG
+        print("[HealthKitDS] Calculated currentStreak: \(currentStreak)")
+        #endif
+        
         return SessionStatistics(
             todayMinutes: todayMinutes,
             thisWeekMinutes: weekMinutes,
@@ -114,6 +126,30 @@ final class HealthKitMeditationDataSource: MeditationDataSource {
         }
 
         return calculateLongestStreakFromSessions(sessions)
+    }
+
+    func calculateFocusStatistics() async throws -> SessionStatistics {
+        // HealthKit doesn't distinguish between meditation and focus sessions
+        // Return empty focus statistics
+        return SessionStatistics(
+            todayMinutes: 0,
+            thisWeekMinutes: 0,
+            currentStreak: 0,
+            totalMinutes: 0,
+            totalSessions: 0,
+            averageSessionDuration: 0,
+            longestSessionDuration: 0,
+            lastSessionDate: nil,
+            plannedDuration: 0,
+            actualDuration: 0,
+            wasPaused: false,
+            focusTodayMinutes: 0,
+            focusThisWeekMinutes: 0,
+            focusCurrentStreak: 0,
+            focusTotalMinutes: 0,
+            focusTotalSessions: 0,
+            focusAverageSessionDuration: 0
+        )
     }
 
     // MARK: - Private Helpers

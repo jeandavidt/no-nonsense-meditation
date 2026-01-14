@@ -9,6 +9,7 @@
         <attribute name="idSession" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="isSessionValid" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="pauseCount" attributeType="Integer 16" defaultValueString="0" usesScalarValueType="YES"/>
+        <attribute name="sessionType" attributeType="String" defaultValueString="meditation" usesScalarValueType="NO"/>
         <attribute name="syncedToHealthKit" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="syncedToiCloud" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="wasPaused" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
@@ -18,6 +19,9 @@
         </fetchIndex>
         <fetchIndex name="byCreatedAt">
             <fetchIndexElement property="createdAt" type="Binary" order="descending"/>
+        </fetchIndex>
+        <fetchIndex name="bySessionType">
+            <fetchIndexElement property="sessionType" type="Binary" order="ascending"/>
         </fetchIndex>
     </entity>
 </model>

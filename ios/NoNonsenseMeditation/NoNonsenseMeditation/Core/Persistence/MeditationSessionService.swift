@@ -27,10 +27,15 @@ class MeditationSessionService {
     /// Create a new meditation session
     /// - Parameters:
     ///   - plannedDuration: User's intended duration in minutes
+    ///   - sessionType: The type of session (meditation or focus)
     ///   - startDate: When the session started (defaults to now)
     /// - Returns: The created MeditationSession
     /// - Throws: CoreData save errors
-    func createSession(plannedDuration: Int, startDate: Date = Date()) throws -> MeditationSession {
+    func createSession(
+        plannedDuration: Int,
+        sessionType: SessionType = .meditation,
+        startDate: Date = Date()
+    ) throws -> MeditationSession {
         let context = persistenceController.viewContext
 
         let session = MeditationSession(context: context)
@@ -43,12 +48,13 @@ class MeditationSessionService {
         session.completedAt = nil
         session.wasPaused = false
         session.pauseCount = 0
+        session.sessionType = sessionType.rawValue
         session.syncedToHealthKit = false
         session.syncedToiCloud = false
 
         try persistenceController.saveContext()
 
-        print("✅ Created session: \(session.idSession?.uuidString ?? "unknown")")
+        print("✅ Created \(sessionType.displayName.lowercased()) session: \(session.idSession?.uuidString ?? "unknown")")
         return session
     }
 
@@ -121,6 +127,42 @@ class MeditationSessionService {
     /// - Throws: CoreData fetch errors
     func fetchValidSessions() throws -> [MeditationSession] {
         return try persistenceController.fetchValidSessions()
+    }
+
+    /// Fetch sessions filtered by session type
+    /// - Parameters:
+    ///   - sessionType: The type of sessions to fetch
+    ///   - validOnly: Whether to fetch only valid sessions
+    /// - Returns: Array of sessions matching the criteria
+    /// - Throws: CoreData fetch errors
+    func fetchSessions(
+        byType sessionType: SessionType,
+        validOnly: Bool = true
+    ) throws -> [MeditationSession] {
+        let request = MeditationSession.fetchRequest()
+
+        var predicates: [NSPredicate] = [
+            NSPredicate(format: "sessionType == %@", sessionType.rawValue)
+        ]
+
+        if validOnly {
+            predicates.append(NSPredicate(format: "isSessionValid == YES"))
+        }
+
+        request.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: predicates)
+        request.sortDescriptors = [
+            NSSortDescriptor(keyPath: \MeditationSession.createdAt, ascending: false)
+        ]
+
+        return try persistenceController.viewContext.fetch(request)
+    }
+
+    /// Fetch valid sessions filtered by session type
+    /// - Parameter sessionType: The type of sessions to fetch
+    /// - Returns: Array of valid sessions of the specified type
+    /// - Throws: CoreData fetch errors
+    func fetchValidSessions(byType sessionType: SessionType) throws -> [MeditationSession] {
+        return try fetchSessions(byType: sessionType, validOnly: true)
     }
 
     /// Fetch sessions within a date range
