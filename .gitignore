@@ -121,3 +121,7 @@ ios/*.xcodeproj/
 # Build logs
 ios/build*.log
 ios/*.log
+
+wind_chimes.m4a
+brown_noise.m4a
+library_noise.m4a
