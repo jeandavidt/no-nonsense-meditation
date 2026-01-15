@@ -47,7 +47,7 @@ class TimerViewModel {
     private(set) var formattedTime: String = "00:00"
     
     /// Selected background sound
-    private(set) var selectedBackgroundSound: BackgroundSound = .none
+    private(set) var selectedBackgroundSound: AmbianceSound = AmbianceSoundLoader.none
     
     /// Selected music library item (when using user library)
     var selectedMusicLibraryItem: MusicLibraryItem?
@@ -132,10 +132,10 @@ class TimerViewModel {
             await updateFromTimerService()
 
             // Start background sound if selected
-            if selectedBackgroundSound == .userLibrary, let musicItem = selectedMusicLibraryItem {
+            if selectedBackgroundSound.usesUserLibrary, let musicItem = selectedMusicLibraryItem {
                 // Play from user's music library
                 try? await audioService.startUserLibraryMusic(musicItem)
-            } else if selectedBackgroundSound != .none {
+            } else if selectedBackgroundSound.id != "none" {
                 try? await audioService.startBackgroundSound(selectedBackgroundSound)
             }
 
@@ -488,14 +488,14 @@ class TimerViewModel {
     
     /// Set the background sound for the meditation session
     /// - Parameter sound: The background sound to use
-    func setBackgroundSound(_ sound: BackgroundSound) {
+    func setBackgroundSound(_ sound: AmbianceSound) {
         self.selectedBackgroundSound = sound
         sound.saveToUserDefaults()
     }
     
     /// Load saved background sound preference
     func loadBackgroundSoundPreference() {
-        self.selectedBackgroundSound = BackgroundSound.loadFromUserDefaults()
+        self.selectedBackgroundSound = AmbianceSound.loadFromUserDefaults()
     }
     
     /// Load saved music library item preference
@@ -507,9 +507,11 @@ class TimerViewModel {
     /// - Parameter item: The music library item to use
     func setMusicLibraryItem(_ item: MusicLibraryItem) {
         self.selectedMusicLibraryItem = item
-        self.selectedBackgroundSound = .userLibrary
-        item.saveToUserDefaults()
-        BackgroundSound.userLibrary.saveToUserDefaults()
+        if let userLibrarySound = AmbianceSoundLoader.userLibrary {
+            self.selectedBackgroundSound = userLibrarySound
+            item.saveToUserDefaults()
+            userLibrarySound.saveToUserDefaults()
+        }
     }
     
     /// Set up remote command callbacks for lockscreen controls
@@ -549,7 +551,7 @@ class TimerViewModel {
     
     /// Preview a background sound
     /// - Parameter sound: The sound to preview
-    func previewBackgroundSound(_ sound: BackgroundSound) {
+    func previewBackgroundSound(_ sound: AmbianceSound) {
         Task {
             await audioService.stopPreview()
             try? await audioService.previewBackgroundSound(sound, duration: 3.0)

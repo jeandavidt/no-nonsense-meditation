@@ -19,13 +19,13 @@ protocol AudioServiceProtocol: Actor {
     func playResumeSound() async throws
     func playCompletionSound()
 
-    func startBackgroundSound(_ sound: BackgroundSound) async throws
+    func startBackgroundSound(_ sound: AmbianceSound) async throws
     func startUserLibraryMusic(_ item: MusicLibraryItem) async throws
     func pauseBackgroundSound()
     func resumeBackgroundSound()
     func stopBackgroundSound()
 
-    func previewBackgroundSound(_ sound: BackgroundSound, duration: TimeInterval) async throws
+    func previewBackgroundSound(_ sound: AmbianceSound, duration: TimeInterval) async throws
     func stopPreview()
 
     func setSilentModeOverride(_ override: Bool)
@@ -63,7 +63,7 @@ actor AudioService: AudioServiceProtocol {
     private var backgroundPlayer: AVAudioPlayer?
 
     /// Currently playing background sound
-    private var currentBackgroundSound: BackgroundSound = .none
+    private var currentBackgroundSound: AmbianceSound = AmbianceSoundLoader.none
 
     /// Whether to override silent mode
     private var overrideSilentMode: Bool = false
@@ -167,13 +167,13 @@ actor AudioService: AudioServiceProtocol {
     /// Start playing a background sound with infinite looping
     /// - Parameter sound: The background sound to play
     /// - Throws: AudioError if playback fails
-    func startBackgroundSound(_ sound: BackgroundSound) async throws {
+    func startBackgroundSound(_ sound: AmbianceSound) async throws {
         // Stop any currently playing background sound
         stopBackgroundSound()
 
         // If "none" is selected, just return without playing sound
-        guard sound.requiresFile, let filename = sound.filename else {
-            currentBackgroundSound = .none
+        guard sound.requiresFile, let filename = sound.filename, let fileExtension = sound.fileExtension else {
+            currentBackgroundSound = AmbianceSoundLoader.none
             return
         }
 
@@ -181,7 +181,7 @@ actor AudioService: AudioServiceProtocol {
         try await configureAudioSession(overrideSilent: overrideSilentMode)
 
         // Locate sound file in bundle
-        guard let soundURL = Bundle.main.url(forResource: filename, withExtension: sound.fileExtension) else {
+        guard let soundURL = Bundle.main.url(forResource: filename, withExtension: fileExtension) else {
             throw AudioError.soundNotFound
         }
 
@@ -213,7 +213,7 @@ actor AudioService: AudioServiceProtocol {
         // Start playback via music library service
         try await musicLibraryService.startPlayback(item: item)
         
-        self.currentBackgroundSound = .userLibrary
+        self.currentBackgroundSound = AmbianceSoundLoader.userLibrary ?? AmbianceSoundLoader.none
         self.isPlayingUserLibraryMusic = true
         self.currentMusicLibraryItem = item
     }
@@ -233,7 +233,7 @@ actor AudioService: AudioServiceProtocol {
             currentMusicLibraryItem = nil
         }
         
-        currentBackgroundSound = .none
+        currentBackgroundSound = AmbianceSoundLoader.none
         clearNowPlayingInfo()
     }
 
@@ -261,7 +261,7 @@ actor AudioService: AudioServiceProtocol {
 
     /// Get the currently playing background sound
     /// - Returns: The current background sound, or .none if not playing
-    func getCurrentBackgroundSound() -> BackgroundSound {
+    func getCurrentBackgroundSound() -> AmbianceSound {
         return currentBackgroundSound
     }
 
@@ -272,17 +272,17 @@ actor AudioService: AudioServiceProtocol {
     ///   - sound: The background sound to preview
     ///   - duration: How long to play the preview (default: 3 seconds)
     /// - Throws: AudioError if playback fails
-    func previewBackgroundSound(_ sound: BackgroundSound, duration: TimeInterval = 3.0) async throws {
+    func previewBackgroundSound(_ sound: AmbianceSound, duration: TimeInterval = 3.0) async throws {
         // Stop any existing preview
         stopPreview()
 
         // If "none" is selected, just return
-        guard sound.requiresFile, let filename = sound.filename else {
+        guard sound.requiresFile, let filename = sound.filename, let fileExtension = sound.fileExtension else {
             return
         }
 
         // Locate sound file in bundle
-        guard let soundURL = Bundle.main.url(forResource: filename, withExtension: sound.fileExtension) else {
+        guard let soundURL = Bundle.main.url(forResource: filename, withExtension: fileExtension) else {
             throw AudioError.soundNotFound
         }
 

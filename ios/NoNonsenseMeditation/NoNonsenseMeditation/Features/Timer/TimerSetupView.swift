@@ -168,10 +168,10 @@ struct TimerSetupView: View {
 
             ScrollView {
                 VStack(spacing: 0) {
-                    ForEach(BackgroundSound.allCases) { sound in
+                    ForEach(AmbianceSoundLoader.allSounds) { sound in
                         backgroundSoundRow(for: sound)
 
-                        if sound != BackgroundSound.allCases.last {
+                        if sound.id != AmbianceSoundLoader.allSounds.last?.id {
                             Divider()
                                 .padding(.leading, 60)
                         }
@@ -194,7 +194,7 @@ struct TimerSetupView: View {
     }
 
     /// Individual background sound row
-    private func backgroundSoundRow(for sound: BackgroundSound) -> some View {
+    private func backgroundSoundRow(for sound: AmbianceSound) -> some View {
         Button(action: {
             selectBackgroundSound(sound)
         }) {
@@ -207,7 +207,7 @@ struct TimerSetupView: View {
 
                 // Name and description
                 VStack(alignment: .leading, spacing: 2) {
-                    if sound == .userLibrary, let item = viewModel.selectedMusicLibraryItem {
+                    if sound.usesUserLibrary, let item = viewModel.selectedMusicLibraryItem {
                         // Show selected music item info
                         Text(item.title)
                             .font(.body)
@@ -230,14 +230,14 @@ struct TimerSetupView: View {
                 Spacer()
                 
                 // Chevron for music library option
-                if sound == .userLibrary {
+                if sound.usesUserLibrary {
                     Image(systemName: "chevron.right")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
 
                 // Checkmark
-                if viewModel.selectedBackgroundSound == sound {
+                if viewModel.selectedBackgroundSound.id == sound.id {
                     Image(systemName: "checkmark")
                         .font(.body.weight(.semibold))
                         .foregroundColor(.accentColor)
@@ -291,13 +291,13 @@ struct TimerSetupView: View {
     // MARK: - Methods
 
     /// Select a background sound
-    private func selectBackgroundSound(_ sound: BackgroundSound) {
+    private func selectBackgroundSound(_ sound: AmbianceSound) {
         // Haptic feedback
         let impact = UIImpactFeedbackGenerator(style: .light)
         impact.impactOccurred()
 
         // If user library is selected, show the music picker
-        if sound == .userLibrary {
+        if sound.usesUserLibrary {
             showMusicPicker = true
             return
         }
@@ -305,7 +305,7 @@ struct TimerSetupView: View {
         viewModel.setBackgroundSound(sound)
 
         // Play preview if not "none"
-        if sound != .none {
+        if sound.id != "none" {
             viewModel.previewBackgroundSound(sound)
         } else {
             viewModel.stopPreview()

@@ -3,12 +3,19 @@
 //  NoNonsenseMeditation
 //
 //  Created on 2026-01-06.
+//  DEPRECATED: Use AmbianceSound from ambiance_sounds.json instead
 //
 
 import Foundation
 
 /// Available background sounds for meditation sessions
 /// Provides options for ambient audio during meditation
+///
+/// DEPRECATED: This enum is deprecated. Use `AmbianceSound` instead,
+/// which is generated from `Resources/ambiance_sounds.json` at build time.
+///
+/// To add new sounds, edit `Resources/ambiance_sounds.json` and rebuild.
+@available(*, deprecated, message: "Use AmbianceSound from AmbianceSoundLoader instead")
 enum BackgroundSound: String, CaseIterable, Identifiable, Codable, Sendable {
     case none = "none"
     case brownNoise = "brown_noise"
@@ -101,6 +108,14 @@ enum BackgroundSound: String, CaseIterable, Identifiable, Codable, Sendable {
     var usesUserLibrary: Bool {
         return self == .userLibrary
     }
+    
+    // MARK: - Conversion to AmbianceSound
+    
+    /// Convert to the new AmbianceSound type
+    /// Returns the corresponding AmbianceSound or nil if not found
+    var ambianceSound: AmbianceSound? {
+        AmbianceSoundLoader.sound(withId: rawValue)
+    }
 }
 
 // MARK: - UserDefaults Persistence
@@ -124,3 +139,10 @@ extension BackgroundSound {
         return sound
     }
 }
+
+// MARK: - Backward Compatibility Type Alias
+
+/// Type alias for backward compatibility
+/// Deprecated: Use `AmbianceSoundLoader.allSounds` instead
+@available(*, deprecated, renamed: "AmbianceSound")
+typealias BackgroundSoundType = AmbianceSound

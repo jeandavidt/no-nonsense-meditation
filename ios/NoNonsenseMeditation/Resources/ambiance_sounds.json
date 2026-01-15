@@ -1,0 +1,52 @@
+[
+  {
+    "id": "none",
+    "displayName": "No Background Sound",
+    "iconName": "speaker.slash",
+    "description": "Silence",
+    "filename": null,
+    "fileExtension": null,
+    "requiresFile": false,
+    "isUserLibrary": false
+  },
+  {
+    "id": "brown_noise",
+    "displayName": "Brown Noise",
+    "iconName": "waveform",
+    "description": "Deep ambient noise",
+    "filename": "brown_noise",
+    "fileExtension": "m4a",
+    "requiresFile": true,
+    "isUserLibrary": false
+  },
+  {
+    "id": "library_noise",
+    "displayName": "Library Ambience",
+    "iconName": "building.2",
+    "description": "Quiet study atmosphere",
+    "filename": "library_noise",
+    "fileExtension": "m4a",
+    "requiresFile": true,
+    "isUserLibrary": false
+  },
+  {
+    "id": "wind_chimes",
+    "displayName": "Wind Chimes",
+    "iconName": "wind",
+    "description": "Gentle chimes",
+    "filename": "wind_chimes",
+    "fileExtension": "m4a",
+    "requiresFile": true,
+    "isUserLibrary": false
+  },
+  {
+    "id": "user_library",
+    "displayName": "Music Library",
+    "iconName": "music.note.list",
+    "description": "Play from your library",
+    "filename": null,
+    "fileExtension": null,
+    "requiresFile": false,
+    "isUserLibrary": true
+  }
+]
