@@ -20,7 +20,7 @@ struct SetupTimerDialView: View {
     var sessionType: SessionType = .meditation
 
     /// Size of the dial
-    private let size: CGFloat = 200
+    private let size: CGFloat = 250
 
     /// Stroke width for the ring
     private let strokeWidth: CGFloat = 8
@@ -30,13 +30,15 @@ struct SetupTimerDialView: View {
 
     /// Drag state for circular gesture
     @State private var isDragging = false
+    
+    /// Cumulative angle for tracking multiple rotations
+    @State private var cumulativeAngleDegrees: Double = 0
     @State private var dragStartAngleDegrees: Double = 0
-    @State private var initialDuration: Int = 0
 
-    /// Available duration options for snapping
+    /// Available duration options
     private let durationOptions = [5, 10, 15, 20, 30, 45, 60, 90, 120]
-    private let minDuration = 5
-    private let maxDuration = 120
+    private let minDuration = 1
+    private let maxDuration = 720
 
     // MARK: - Computed Properties
 
@@ -70,6 +72,11 @@ struct SetupTimerDialView: View {
         sessionType == .meditation ? .green : .orange
     }
 
+    /// Progress for the arc (0-1, based on duration)
+    private var progress: Double {
+        Double(durationMinutes) / Double(maxDuration)
+    }
+
     // MARK: - View Body
 
     var body: some View {
@@ -89,19 +96,14 @@ struct SetupTimerDialView: View {
                 )
                 .frame(width: size, height: size)
 
-            // Decorative tick marks
+            // Minute tick marks (every 6 degrees = 1 minute)
             tickMarks
 
-            // Accent ring segment (decorative, shows ~25% to hint at progress)
+            // Progress arc showing selected duration
             Circle()
-                .trim(from: 0, to: 0.25)
+                .trim(from: 0, to: CGFloat(progress))
                 .stroke(
-                    AngularGradient(
-                        gradient: Gradient(colors: [themeColor.opacity(0.3), themeColor]),
-                        center: .center,
-                        startAngle: .degrees(-90),
-                        endAngle: .degrees(0)
-                    ),
+                    themeColor,
                     style: StrokeStyle(lineWidth: strokeWidth, lineCap: .round)
                 )
                 .frame(width: size, height: size)
@@ -133,6 +135,10 @@ struct SetupTimerDialView: View {
                 }
         )
         .onAppear {
+            // Initialize cumulative angle based on current duration
+            // duration = (angle / 6) + 1, so angle = (duration - 1) * 6
+            cumulativeAngleDegrees = Double(durationMinutes - 1) * 6.0
+            
             // Smooth glow pulse (gentle, no bouncing)
             withAnimation(
                 .easeInOut(duration: 6)
@@ -162,7 +168,6 @@ struct SetupTimerDialView: View {
             // Start of drag
             isDragging = true
             dragStartAngleDegrees = angleDegrees
-            initialDuration = durationMinutes
             let impact = UIImpactFeedbackGenerator(style: .light)
             impact.impactOccurred()
         }
@@ -170,70 +175,51 @@ struct SetupTimerDialView: View {
         // Calculate angle change from start
         var angleDiff = angleDegrees - dragStartAngleDegrees
         
-        // Normalize angle difference
+        // Normalize angle difference to -180 to 180
         while angleDiff > 180 { angleDiff -= 360 }
         while angleDiff < -180 { angleDiff += 360 }
-
-        // Convert angle to duration change (full circle = 30 minutes)
-        let minutesChange = Int(angleDiff / 12) // ~2.5 degrees per minute
         
-        var newDuration = initialDuration + minutesChange
-        newDuration = max(minDuration, min(maxDuration, newDuration))
+        // Update cumulative angle
+        cumulativeAngleDegrees += angleDiff
+        dragStartAngleDegrees = angleDegrees
         
-        // Snap to nearest option if not actively dragging far
-        if abs(minutesChange) < 3 {
-            newDuration = findNearestDuration(from: newDuration)
-        }
-
+        // Clamp cumulative angle to valid range
+        // Min: 0° (1 minute), Max: 4319° (720 minutes)
+        let minAngle = 0.0
+        let maxAngle = Double(maxDuration - 1) * 6.0
+        cumulativeAngleDegrees = max(minAngle, min(maxAngle, cumulativeAngleDegrees))
+        
+        // Calculate duration from cumulative angle: 6° = 1 minute
+        // duration = (angle / 6) + 1
+        let newDuration = Int(cumulativeAngleDegrees / 6.0) + 1
+        
         if newDuration != durationMinutes {
             let impact = UIImpactFeedbackGenerator(style: .light)
             impact.impactOccurred()
-            withAnimation(.easeOut(duration: 0.1)) {
-                durationMinutes = newDuration
-            }
+            durationMinutes = newDuration
         }
     }
 
     /// Handle drag gesture end
     private func handleDragEnded() {
         isDragging = false
-        // Snap to nearest duration option
-        let snapped = findNearestDuration(from: durationMinutes)
-        if snapped != durationMinutes {
-            let impact = UIImpactFeedbackGenerator(style: .medium)
-            impact.impactOccurred()
-            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                durationMinutes = snapped
-            }
-        }
-    }
-
-    /// Find the nearest duration from the available options
-    private func findNearestDuration(from value: Int) -> Int {
-        var nearest = durationOptions[0]
-        var minDiff = abs(value - nearest)
-
-        for option in durationOptions {
-            let diff = abs(value - option)
-            if diff < minDiff {
-                minDiff = diff
-                nearest = option
-            }
-        }
-        return nearest
     }
 
     // MARK: - Subviews
 
-    /// Subtle tick marks around the ring
+    /// Tick marks around the ring (every 6 degrees = 1 minute)
     private var tickMarks: some View {
         ZStack {
-            ForEach(0..<12, id: \.self) { index in
+            // Minor ticks every 6 degrees (60 ticks per rotation)
+            ForEach(0..<60, id: \.self) { index in
                 Rectangle()
-                    .fill(Color.gray.opacity(index % 3 == 0 ? 0.4 : 0.2))
-                    .frame(width: index % 3 == 0 ? 2 : 1, height: index % 3 == 0 ? 10 : 6)
+                    .fill(Color.gray.opacity(index % 6 == 0 ? 0.5 : 0.2))
+                    .frame(
+                        width: index % 6 == 0 ? 1.5 : 1,
+                        height: index % 6 == 0 ? 10 : 6
+                    )
                     .offset(y: -size / 2 + 20)
-                    .rotationEffect(.degrees(Double(index) * 30))
+                    .rotationEffect(.degrees(Double(index) * 6))
             }
         }
     }

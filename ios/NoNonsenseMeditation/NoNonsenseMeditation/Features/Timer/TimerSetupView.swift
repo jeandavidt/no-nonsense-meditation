@@ -67,19 +67,19 @@ struct TimerSetupView: View {
                         durationMinutes: $selectedDuration,
                         sessionType: highlightedSessionType ?? .meditation
                     )
-                    .padding(.bottom, 32)
+                    .padding(.bottom, 16)
                     .animation(.easeInOut(duration: 0.3), value: highlightedSessionType)
 
                     // Duration chips
                     durationChipsSection
-                        .padding(.bottom, 28)
+                        .padding(.bottom, 16)
 
                     // Sound selector row
                     soundSelectorRow
                         .padding(.horizontal, 20)
-                        .padding(.bottom, 24)
+                        .padding(.bottom, 16)
 
-                    Spacer(minLength: 20)
+                    Spacer(minLength: 10)
 
                     // Action buttons
                     startButtonSection
