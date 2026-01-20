@@ -3,15 +3,13 @@
 //  NoNonsenseMeditation
 //
 //  Created on 2026-01-05.
-//  Updated on 2026-01-06 - Added background sound selection
-//  Updated on 2026-01-12 - Added music library browsing
-//  Updated on 2026-01-14 - Added focus session support
+//  Redesigned on 2026-01-20 - Single-screen layout with timer dial preview
 //
 
 import SwiftUI
 
 /// View for setting up meditation timer duration and background sound
-/// Allows users to select meditation duration and optional background audio before starting
+/// Features a central timer dial preview with horizontal duration chips
 struct TimerSetupView: View {
 
     // MARK: - Properties
@@ -37,11 +35,17 @@ struct TimerSetupView: View {
     /// Navigation state for settings
     @State private var showSettings = false
 
-    /// Whether to show the music picker
+    /// Whether to show the sound picker sheet
+    @State private var showSoundPicker = false
+
+    /// Whether to show the music picker full screen cover
     @State private var showMusicPicker = false
 
+    /// Currently highlighted session type for visual feedback
+    @State private var highlightedSessionType: SessionType? = nil
+
     /// Available duration options
-    private let durationOptions = [1, 5, 10, 15, 20, 30, 45, 60, 90, 120]
+    private let durationOptions = [5, 10, 15, 20, 30, 45, 60, 90]
 
     // MARK: - Computed Properties
 
@@ -54,25 +58,38 @@ struct TimerSetupView: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                // Header
-                headerSection
-                    .padding(.bottom, 20)
+            GeometryReader { geometry in
+                VStack(spacing: 0) {
+                    Spacer(minLength: 20)
 
-                // Duration Picker (scrollable)
-                durationPickerSection
-                    .padding(.bottom, 24)
-
-                // Background Sound Picker (scrollable section)
-                backgroundSoundSection
+                    // Hero timer dial preview with swipe support
+                    SetupTimerDialView(
+                        durationMinutes: $selectedDuration,
+                        sessionType: highlightedSessionType ?? .meditation
+                    )
                     .padding(.bottom, 32)
+                    .animation(.easeInOut(duration: 0.3), value: highlightedSessionType)
 
-                // Start Buttons
-                startButtonSection
+                    // Duration chips
+                    durationChipsSection
+                        .padding(.bottom, 28)
+
+                    // Sound selector row
+                    soundSelectorRow
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 24)
+
+                    Spacer(minLength: 20)
+
+                    // Action buttons
+                    startButtonSection
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, max(geometry.safeAreaInsets.bottom, 16))
+                }
             }
-            .padding()
-            .navigationTitle("Setup")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("No Nonsense")
+            .navigationBarTitleDisplayMode(.large)
+            .toolbarBackground(.visible, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
@@ -92,12 +109,32 @@ struct TimerSetupView: View {
             .navigationDestination(isPresented: $showSettings) {
                 SettingsTabView()
             }
+            .sheet(isPresented: $showSoundPicker) {
+                BackgroundSoundPickerSheet(
+                    selectedSound: viewModel.selectedBackgroundSound,
+                    onSelect: { sound in
+                        selectBackgroundSound(sound)
+                    },
+                    selectedMusicItem: $viewModel.selectedMusicLibraryItem,
+                    onSelectMusic: { item in
+                        viewModel.setMusicLibraryItem(item)
+                    },
+                    showMusicPicker: $showMusicPicker
+                )
+            }
+            .fullScreenCover(isPresented: $showMusicPicker) {
+                MusicPickerView(
+                    selectedItem: $viewModel.selectedMusicLibraryItem,
+                    onSelection: { item in
+                        viewModel.setMusicLibraryItem(item)
+                    },
+                    providesNavigation: true
+                )
+            }
             .task {
-                // Handle pending intent actions when view appears
                 handlePendingIntentAction()
             }
             .onChange(of: intentCoordinator.pendingAction) { _, _ in
-                // Handle new intent actions that arrive while view is visible
                 handlePendingIntentAction()
             }
         }
@@ -105,203 +142,158 @@ struct TimerSetupView: View {
 
     // MARK: - Subviews
 
-    /// Header section with app icon and title
-    private var headerSection: some View {
-        VStack(spacing: 12) {
-            Image(systemName: "leaf.fill")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 40, height: 40)
-                .foregroundColor(.accentColor)
-                .padding(10)
-                .background(Color.accentColor.opacity(0.1))
-                .clipShape(Circle())
-
-            Text("No Nonsense Meditation")
-                .font(.title3)
-                .fontWeight(.bold)
-                .multilineTextAlignment(.center)
-        }
-        .padding(.top, 8)
-    }
-
-    /// Duration picker section
-    private var durationPickerSection: some View {
+    /// Horizontal scrolling duration chips
+    private var durationChipsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Duration")
-                .font(.headline)
-                .padding(.horizontal, 4)
+            Text("DURATION")
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundColor(.secondary)
+                .tracking(1.2)
+                .padding(.horizontal, 24)
 
-            Picker("Duration", selection: $selectedDuration) {
-                ForEach(durationOptions, id: \.self) { minutes in
-                    if minutes < 60 {
-                        Text("\(minutes) minutes")
-                            .tag(minutes)
-                    } else {
-                        let hours = minutes / 60
-                        let remainingMins = minutes % 60
-                        if remainingMins == 0 {
-                            Text("\(hours) hour\(hours > 1 ? "s" : "")")
-                                .tag(minutes)
-                        } else {
-                            Text("\(hours) hour\(hours > 1 ? "s" : "") \(remainingMins) min")
-                                .tag(minutes)
-                        }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(durationOptions, id: \.self) { minutes in
+                        DurationChip(
+                            minutes: minutes,
+                            isSelected: selectedDuration == minutes,
+                            action: {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    selectedDuration = minutes
+                                    // Save to UserDefaults
+                                    UserDefaults.standard.set(minutes, forKey: Constants.UserDefaultsKeys.defaultDuration)
+                                }
+                            }
+                        )
                     }
                 }
+                .padding(.horizontal, 20)
             }
-            .pickerStyle(.wheel)
-            .frame(height: 150)
-            .clipped()
-            .padding(.vertical, 8)
-            .background(Color(.systemGray6))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
         }
     }
 
-    /// Background sound selection section
-    private var backgroundSoundSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Background Sound")
-                .font(.headline)
-                .padding(.horizontal, 4)
-
-            ScrollView {
-                VStack(spacing: 0) {
-                    ForEach(AmbianceSoundLoader.allSounds) { sound in
-                        backgroundSoundRow(for: sound)
-
-                        if sound.id != AmbianceSoundLoader.allSounds.last?.id {
-                            Divider()
-                                .padding(.leading, 60)
-                        }
-                    }
-                }
-            }
-            .frame(maxHeight: 250)
-            .padding(.vertical, 4)
-            .background(Color(.systemGray6))
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-        }
-        .sheet(isPresented: $showMusicPicker) {
-            MusicPickerView(
-                selectedItem: $viewModel.selectedMusicLibraryItem,
-                onSelection: { item in
-                    viewModel.setMusicLibraryItem(item)
-                }
-            )
-        }
-    }
-
-    /// Individual background sound row
-    private func backgroundSoundRow(for sound: AmbianceSound) -> some View {
+    /// Compact sound selector row
+    private var soundSelectorRow: some View {
         Button(action: {
-            selectBackgroundSound(sound)
+            let impact = UIImpactFeedbackGenerator(style: .light)
+            impact.impactOccurred()
+            showSoundPicker = true
         }) {
-            HStack(spacing: 16) {
+            HStack(spacing: 14) {
                 // Icon
-                Image(systemName: sound.iconName)
-                    .font(.title2)
+                Image(systemName: viewModel.selectedBackgroundSound.iconName)
+                    .font(.title3)
                     .foregroundColor(.accentColor)
-                    .frame(width: 32, height: 32)
+                    .frame(width: 40, height: 40)
+                    .background(Color.accentColor.opacity(0.1))
+                    .clipShape(Circle())
 
-                // Name and description
+                // Label and value
                 VStack(alignment: .leading, spacing: 2) {
-                    if sound.usesUserLibrary, let item = viewModel.selectedMusicLibraryItem {
-                        // Show selected music item info
+                    Text("Background Sound")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    if viewModel.selectedBackgroundSound.usesUserLibrary,
+                       let item = viewModel.selectedMusicLibraryItem {
                         Text(item.title)
                             .font(.body)
                             .foregroundColor(.primary)
                             .lineLimit(1)
-                        Text(item.subtitle)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
                     } else {
-                        Text(sound.displayName)
+                        Text(viewModel.selectedBackgroundSound.displayName)
                             .font(.body)
                             .foregroundColor(.primary)
-                        Text(sound.description)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
                     }
                 }
 
                 Spacer()
-                
-                // Chevron for music library option
-                if sound.usesUserLibrary {
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
 
-                // Checkmark
-                if viewModel.selectedBackgroundSound.id == sound.id {
-                    Image(systemName: "checkmark")
-                        .font(.body.weight(.semibold))
-                        .foregroundColor(.accentColor)
-                }
+                Image(systemName: "chevron.right")
+                    .font(.caption.weight(.semibold))
+                    .foregroundColor(.secondary)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
-            .contentShape(Rectangle())
+            .padding(16)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color(.systemGray6))
+            )
         }
         .buttonStyle(.plain)
     }
 
-    /// Start button section with both meditation and focus buttons
+    /// Start buttons section
     private var startButtonSection: some View {
         VStack(spacing: 12) {
-            // Meditation button
+            // Meditation button - Primary
             Button(action: {
                 startMeditation()
             }) {
-                HStack {
+                HStack(spacing: 8) {
                     Image(systemName: "leaf.fill")
                     Text("Start Meditation")
                 }
                 .font(.headline)
+                .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
-                .padding()
+                .padding(.vertical, 16)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.green, Color.green.opacity(0.85)]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
+            .buttonStyle(.plain)
             .disabled(selectedDuration <= 0)
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in highlightedSessionType = .meditation }
+                    .onEnded { _ in highlightedSessionType = nil }
+            )
 
-            // Focus session button
+            // Focus button - Secondary
             Button(action: {
                 startFocusSession()
             }) {
-                HStack {
+                HStack(spacing: 8) {
                     Image(systemName: "brain.head.profile")
                     Text("Start Focus Session")
                 }
                 .font(.headline)
+                .foregroundColor(.orange)
                 .frame(maxWidth: .infinity)
-                .padding()
+                .padding(.vertical, 16)
+                .background(
+                    RoundedRectangle(cornerRadius: 14)
+                        .strokeBorder(Color.orange.opacity(0.5), lineWidth: 1.5)
+                        .background(
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(Color.orange.opacity(0.08))
+                        )
+                )
             }
-            .buttonStyle(.bordered)
-            .controlSize(.large)
+            .buttonStyle(.plain)
             .disabled(selectedDuration <= 0)
+            .simultaneousGesture(
+                DragGesture(minimumDistance: 0)
+                    .onChanged { _ in highlightedSessionType = .focus }
+                    .onEnded { _ in highlightedSessionType = nil }
+            )
         }
-        .padding(.top, 8)
     }
 
     // MARK: - Methods
 
     /// Select a background sound
     private func selectBackgroundSound(_ sound: AmbianceSound) {
-        // Haptic feedback
         let impact = UIImpactFeedbackGenerator(style: .light)
         impact.impactOccurred()
 
-        // If user library is selected, show the music picker
-        if sound.usesUserLibrary {
-            showMusicPicker = true
-            return
-        }
-        
         viewModel.setBackgroundSound(sound)
 
         // Play preview if not "none"
@@ -314,39 +306,25 @@ struct TimerSetupView: View {
 
     /// Start meditation with selected duration
     private func startMeditation() {
-        // Validate duration
         guard selectedDuration > 0 else { return }
 
-        // Haptic feedback
         let impact = UIImpactFeedbackGenerator(style: .medium)
         impact.impactOccurred()
 
-        // Stop any preview playback
         viewModel.stopPreview()
-
-        // Start timer with meditation session type
         viewModel.startTimer(duration: durationInSeconds, sessionType: .meditation)
-
-        // Navigate to active meditation view
         isActive = true
     }
 
     /// Start focus session with selected duration
     private func startFocusSession() {
-        // Validate duration
         guard selectedDuration > 0 else { return }
 
-        // Haptic feedback
         let impact = UIImpactFeedbackGenerator(style: .medium)
         impact.impactOccurred()
 
-        // Stop any preview playback
         viewModel.stopPreview()
-
-        // Start timer with focus session type
         viewModel.startTimer(duration: durationInSeconds, sessionType: .focus)
-
-        // Navigate to active meditation view
         isFocusActive = true
     }
 
@@ -356,26 +334,16 @@ struct TimerSetupView: View {
 
         switch action {
         case .startMeditation(let durationMinutes):
-            // Set the duration from the intent
             selectedDuration = durationMinutes
 
-            // Small delay to ensure view is ready
             Task { @MainActor in
-                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
-
-                // Start meditation with intent duration
+                try? await Task.sleep(nanoseconds: 100_000_000)
                 viewModel.startTimer(duration: TimeInterval(durationMinutes * 60))
-
-                // Navigate to active meditation view
                 isActive = true
-
-                // Clear the pending action
                 intentCoordinator.clearPendingAction()
             }
 
         case .pauseMeditation, .resumeMeditation, .stopMeditation:
-            // These actions should be handled by ActiveMeditationView
-            // Not applicable in TimerSetupView
             break
         }
     }

@@ -59,6 +59,12 @@ struct ActiveMeditationView: View {
                 }
             }
         }
+        .onDisappear {
+            // Cancel session when view is dismissed (e.g., swipe back or back button)
+            if viewModel.isRunning || viewModel.isPaused {
+                viewModel.cancelSession()
+            }
+        }
         .confirmationDialog(
             "Cancel \(sessionType.displayName)?",
             isPresented: $showCancelConfirmation,
@@ -93,18 +99,6 @@ struct ActiveMeditationView: View {
     /// Header section with back button and title
     private var headerSection: some View {
         HStack {
-            // Back button (only visible when not running)
-            if !viewModel.isRunning {
-                Button(action: {
-                    showCancelConfirmation = true
-                }) {
-                    Image(systemName: "xmark.circle.fill")
-                    .resizable()
-                    .frame(width: 32, height: 32)
-                    .foregroundColor(.secondary)
-                }
-            }
-
             Spacer()
 
             // Title based on session type
@@ -133,7 +127,8 @@ struct ActiveMeditationView: View {
                 remainingTime: viewModel.remainingTime,
                 isRunning: viewModel.isRunning,
                 isPaused: viewModel.isPaused,
-                isCompleted: viewModel.isCompleted
+                isCompleted: viewModel.isCompleted,
+                sessionType: sessionType
             )
 
             // Additional info
@@ -149,137 +144,115 @@ struct ActiveMeditationView: View {
 
     /// Control buttons section
     private var controlButtonsSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             if viewModel.isRunning && viewModel.isInOvertimeMode {
                 // Overtime running state - show Pause and End controls
                 // Pause button
-                Button(action: {
+                primaryActionButton(
+                    title: "Pause",
+                    icon: "pause.fill",
+                    color: sessionType.color
+                ) {
                     let impact = UIImpactFeedbackGenerator(style: .light)
                     impact.impactOccurred()
                     viewModel.pauseTimer()
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "pause.fill")
-                        Text("Pause")
-                    }
-                    .frame(minWidth: 160)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
 
                 // End session button (saves actual overtime)
-                Button(action: {
+                secondaryActionButton(
+                    title: "End Session",
+                    color: .red
+                ) {
                     let impact = UIImpactFeedbackGenerator(style: .light)
                     impact.impactOccurred()
                     endMeditationEarly()
-                }) {
-                    Text("End Session")
-                        .frame(minWidth: 160)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .foregroundColor(.red)
             } else if viewModel.isRunning && viewModel.remainingTime <= 0 {
                 // Overtime State - Two options
-                VStack(spacing: 16) {
-                    // End Session button (primary action)
-                    Button(action: {
-                        let success = UINotificationFeedbackGenerator()
-                        success.notificationOccurred(.success)
-                        viewModel.endSessionAtPlannedDuration()
+                // End Session button (primary action)
+                primaryActionButton(
+                    title: "End Session",
+                    icon: "checkmark.circle.fill",
+                    color: sessionType.color
+                ) {
+                    let success = UINotificationFeedbackGenerator()
+                    success.notificationOccurred(.success)
+                    viewModel.endSessionAtPlannedDuration()
 
-                        // Build deterministic recap input and navigate immediately
-                        let newlyUnlocked = AchievementService.shared.checkAndUnlockAchievements()
-                        let recap = RecapInput(
-                            plannedDuration: viewModel.totalDuration,
-                            actualDuration: viewModel.totalDuration,
-                            wasOvertimeDiscarded: true,
-                            wasPaused: viewModel.isPaused,
-                            unlockedAchievements: newlyUnlocked,
-                            isSessionValid: isSessionValid(plannedDuration: viewModel.totalDuration, actualDuration: viewModel.totalDuration),
-                            sessionType: sessionType
-                        )
-                        recapInput = recap
-                    }) {
-                        HStack(spacing: 8) {
-                            Image(systemName: "checkmark.circle.fill")
-                            Text("End Session")
-                        }
-                        .frame(minWidth: 160)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .controlSize(.large)
-
-                    // Add Overtime button (secondary action)
-                    Button(action: {
-                        let impact = UIImpactFeedbackGenerator(style: .light)
-                        impact.impactOccurred()
-                        viewModel.stopTimer(suppressCompletionIfOvertime: true)
-
-                        let newlyUnlocked = AchievementService.shared.checkAndUnlockAchievements()
-                        let recap = RecapInput(
-                            plannedDuration: viewModel.totalDuration,
-                            actualDuration: viewModel.elapsedTime,
-                            wasOvertimeDiscarded: false,
-                            wasPaused: viewModel.isPaused,
-                            unlockedAchievements: newlyUnlocked,
-                            isSessionValid: isSessionValid(plannedDuration: viewModel.totalDuration, actualDuration: viewModel.elapsedTime),
-                            sessionType: sessionType
-                        )
-                        recapInput = recap
-                    }) {
-                        Text("End and Save Overtime")
-                            .frame(minWidth: 160)
-                    }
+                    // Build deterministic recap input and navigate immediately
+                    let newlyUnlocked = AchievementService.shared.checkAndUnlockAchievements()
+                    let recap = RecapInput(
+                        plannedDuration: viewModel.totalDuration,
+                        actualDuration: viewModel.totalDuration,
+                        wasOvertimeDiscarded: true,
+                        wasPaused: viewModel.isPaused,
+                        unlockedAchievements: newlyUnlocked,
+                        isSessionValid: isSessionValid(plannedDuration: viewModel.totalDuration, actualDuration: viewModel.totalDuration),
+                        sessionType: sessionType
+                    )
+                    recapInput = recap
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
+
+                // Add Overtime button (secondary action)
+                secondaryActionButton(
+                    title: "End and Save Overtime",
+                    color: .secondary
+                ) {
+                    let impact = UIImpactFeedbackGenerator(style: .light)
+                    impact.impactOccurred()
+                    viewModel.stopTimer(suppressCompletionIfOvertime: true)
+
+                    let newlyUnlocked = AchievementService.shared.checkAndUnlockAchievements()
+                    let recap = RecapInput(
+                        plannedDuration: viewModel.totalDuration,
+                        actualDuration: viewModel.elapsedTime,
+                        wasOvertimeDiscarded: false,
+                        wasPaused: viewModel.isPaused,
+                        unlockedAchievements: newlyUnlocked,
+                        isSessionValid: isSessionValid(plannedDuration: viewModel.totalDuration, actualDuration: viewModel.elapsedTime),
+                        sessionType: sessionType
+                    )
+                    recapInput = recap
+                }
             } else if viewModel.isRunning {
                 // Pause button
-                Button(action: {
+                primaryActionButton(
+                    title: "Pause",
+                    icon: "pause.fill",
+                    color: sessionType.color
+                ) {
                     let impact = UIImpactFeedbackGenerator(style: .light)
                     impact.impactOccurred()
                     viewModel.pauseTimer()
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "pause.fill")
-                        Text("Pause")
-                    }
-                    .frame(minWidth: 160)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
             } else if viewModel.isPaused {
                 // Resume button
-                Button(action: {
+                primaryActionButton(
+                    title: "Resume",
+                    icon: "play.fill",
+                    color: .yellow
+                ) {
                     let impact = UIImpactFeedbackGenerator(style: .medium)
                     impact.impactOccurred()
                     viewModel.resumeTimer()
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "play.fill")
-                        Text("Resume")
-                    }
-                    .frame(minWidth: 160)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.large)
 
                 // End session button
-                Button(action: {
+                secondaryActionButton(
+                    title: "End Session",
+                    color: .red
+                ) {
                     let impact = UIImpactFeedbackGenerator(style: .light)
                     impact.impactOccurred()
                     endMeditationEarly()
-                }) {
-                    Text("End Session")
-                        .frame(minWidth: 160)
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.large)
-                .foregroundColor(.red)
             } else if viewModel.isCompleted {
                 // Complete button (fallback if already stopped)
-                Button(action: {
+                primaryActionButton(
+                    title: "View Session Recap",
+                    icon: "chart.bar.fill",
+                    color: sessionType.color
+                ) {
                     let impact = UIImpactFeedbackGenerator(style: .light)
                     impact.impactOccurred()
 
@@ -297,25 +270,83 @@ struct ActiveMeditationView: View {
                     )
                     print("[ActiveMeditationView] Creating recap with actualDuration=%.2f seconds", actual)
                     recapInput = recap
-                }) {
-                    HStack(spacing: 8) {
-                        Image(systemName: "chart.bar.fill")
-                        Text("View Session Recap")
-                    }
-                    .frame(minWidth: 180)
                 }
-                .buttonStyle(.borderedProminent)
-                .controlSize(.regular)
             }
         }
+        .padding(.horizontal, 20)
         .transition(.opacity)
+    }
+
+    // MARK: - Button Styles (Matching Setup Screen)
+
+    /// Primary action button with gradient background (matches setup screen)
+    private func primaryActionButton(
+        title: String,
+        icon: String? = nil,
+        color: Color,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                if let icon {
+                    Image(systemName: icon)
+                }
+                Text(title)
+            }
+            .font(.headline)
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(
+                LinearGradient(
+                    gradient: Gradient(colors: [color, color.opacity(0.85)]),
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .shadow(color: color.opacity(0.3), radius: 8, x: 0, y: 4)
+        }
+        .buttonStyle(.plain)
+    }
+
+    /// Secondary action button with border style (matches setup screen)
+    private func secondaryActionButton(
+        title: String,
+        icon: String? = nil,
+        color: Color,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                if let icon {
+                    Image(systemName: icon)
+                }
+                Text(title)
+            }
+            .font(.headline)
+            .foregroundColor(color)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .strokeBorder(color.opacity(0.5), lineWidth: 1.5)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(color.opacity(0.08))
+                    )
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Helper Views
 
     /// Info item for displaying timer statistics
     private func infoItem(_ title: String, _ value: String) -> some View {
-        VStack(spacing: 4) {
+        let tintColor: Color = viewModel.isPaused ? .yellow : sessionType.color
+        
+        return VStack(spacing: 4) {
             Text(title)
                 .font(.caption)
                 .foregroundColor(.secondary)
@@ -326,9 +357,7 @@ struct ActiveMeditationView: View {
                 .monospacedDigit()
         }
         .frame(maxWidth: .infinity)
-        .padding(8)
-        .background(Color.gray.opacity(0.1))
-        .cornerRadius(8)
+        .glassInfoContainer(tint: tintColor)
     }
 
     // MARK: - Methods

@@ -23,6 +23,9 @@ struct MusicPickerView: View {
     /// Callback when selection is made
     var onSelection: ((MusicLibraryItem) -> Void)?
     
+    /// Whether this view provides its own navigation (for standalone use)
+    var providesNavigation: Bool = false
+    
     /// Music library service
     private let musicService = MusicLibraryService.shared
     
@@ -63,30 +66,43 @@ struct MusicPickerView: View {
     // MARK: - View Body
     
     var body: some View {
-        NavigationStack {
-            Group {
-                switch authorizationStatus {
-                case .notDetermined:
-                    authorizationRequestView
-                case .authorized:
-                    musicBrowserView
-                case .denied, .restricted:
-                    authorizationDeniedView
+        Group {
+            if providesNavigation {
+                NavigationStack {
+                    contentView
+                        .navigationTitle("Choose Music")
+                        .navigationBarTitleDisplayMode(.inline)
+                        .toolbar {
+                            ToolbarItem(placement: .navigationBarLeading) {
+                                Button("Cancel") {
+                                    dismiss()
+                                }
+                            }
+                        }
                 }
-            }
-            .navigationTitle("Choose Music")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
-                    }
-                }
-            }
-            .task {
-                await checkAuthorization()
+            } else {
+                contentView
             }
         }
+        .task {
+            await checkAuthorization()
+        }
+    }
+    
+    // MARK: - Content View
+    
+    private var contentView: some View {
+        Group {
+            switch authorizationStatus {
+            case .notDetermined:
+                authorizationRequestView
+            case .authorized:
+                musicBrowserView
+            case .denied, .restricted:
+                authorizationDeniedView
+            }
+        }
+        .background(Color(.systemBackground))
     }
     
     // MARK: - Subviews

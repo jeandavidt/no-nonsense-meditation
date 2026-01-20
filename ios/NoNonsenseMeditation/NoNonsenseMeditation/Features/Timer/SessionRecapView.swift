@@ -178,7 +178,7 @@ struct SessionRecapView: View {
 
             Divider()
 
-            // Quick stats
+            // Quick stats with glass containers
             HStack(spacing: 16) {
                 statItem("Planned", statistics.formattedPlannedDuration)
                 statItem("Focus", statistics.focusPercentage + "%")
@@ -194,14 +194,10 @@ struct SessionRecapView: View {
                     Text(showDetailedStats ? "Hide Details" : "View Details")
                     Image(systemName: showDetailedStats ? "chevron.up" : "chevron.down")
                 }
-                .foregroundColor(.accentColor)
+                .foregroundColor(recap.isSessionValid ? recap.sessionType.color : .secondary)
             }
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.gray.opacity(0.1))
-        )
+        .glassSummaryCard(isValid: recap.isSessionValid, sessionType: recap.sessionType)
     }
 
     /// Detailed statistics section
@@ -259,9 +255,18 @@ struct SessionRecapView: View {
                 .fontWeight(.semibold)
         }
         .frame(maxWidth: .infinity)
-        .padding(8)
-        .background(Color.gray.opacity(0.1))
-        .cornerRadius(8)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.primary.opacity(0.03))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .strokeBorder(
+                            (recap.isSessionValid ? recap.sessionType.color : Color.gray).opacity(0.3),
+                            lineWidth: 1
+                        )
+                )
+        )
     }
 
     /// Quality indicator
@@ -276,9 +281,18 @@ struct SessionRecapView: View {
                 .fontWeight(.semibold)
         }
         .frame(maxWidth: .infinity)
-        .padding(8)
-        .background(Color.gray.opacity(0.1))
-        .cornerRadius(8)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.primary.opacity(0.03))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .strokeBorder(
+                            (recap.isSessionValid ? recap.sessionType.color : Color.gray).opacity(0.3),
+                            lineWidth: 1
+                        )
+                )
+        )
     }
 
     /// Time breakdown item
@@ -294,9 +308,18 @@ struct SessionRecapView: View {
                 .monospacedDigit()
         }
         .frame(maxWidth: .infinity)
-        .padding(8)
-        .background(Color.gray.opacity(0.1))
-        .cornerRadius(8)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 8)
+                .fill(Color.primary.opacity(0.03))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .strokeBorder(
+                            (recap.isSessionValid ? recap.sessionType.color : Color.gray).opacity(0.3),
+                            lineWidth: 1
+                        )
+                )
+        )
     }
 
     /// Achievement section
@@ -331,10 +354,7 @@ struct SessionRecapView: View {
                             Spacer()
                         }
                         .padding()
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(achievement.color.opacity(0.1))
-                        )
+                        .glassAchievementCard(isUnlocked: true, color: achievement.color)
                     }
                 }
             }
