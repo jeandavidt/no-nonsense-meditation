@@ -11,7 +11,6 @@ struct AchievementsGalleryView: View {
     @State private var achievementService = AchievementService.shared
     @State private var selectedType: AchievementType?
     @State private var selectedAchievement: Achievement?
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
@@ -22,9 +21,7 @@ struct AchievementsGalleryView: View {
             achievementsGrid
         }
         .padding(Constants.Layout.cardPadding)
-        .background(backgroundGradient)
-        .clipShape(RoundedRectangle(cornerRadius: Constants.Layout.cardCornerRadius))
-        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+        .glassCard(tint: Color.accentColor.opacity(0.08), cornerRadius: Constants.Layout.cardCornerRadius)
         .sheet(item: $selectedAchievement) { achievement in
             AchievementDetailView(achievement: achievement)
         }
@@ -34,7 +31,7 @@ struct AchievementsGalleryView: View {
         HStack {
             Image(systemName: "trophy.fill")
                 .font(.title3)
-                .foregroundColor(.yellow)
+                .foregroundColor(.accentColor)
 
             Text("Achievements")
                 .font(Constants.Typography.sectionHeader)
@@ -64,22 +61,37 @@ struct AchievementsGalleryView: View {
     private var typeFilter: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: Constants.Spacing.small) {
-                TypeFilterButton(
-                    type: nil,
+                FilterPillButton(
                     title: "All",
                     isSelected: selectedType == nil,
-                    action: { selectedType = nil }
+                    action: {
+                        withAnimation(Constants.Animation.Glass.filterMorph) { selectedType = nil }
+                    }
                 )
 
                 ForEach(AchievementType.allCases) { type in
-                    TypeFilterButton(
-                        type: type,
+                    FilterPillButton(
                         title: type.displayName,
                         isSelected: selectedType == type,
-                        action: { selectedType = type }
+                        accentColor: getTypeColor(type),
+                        action: {
+                            withAnimation(Constants.Animation.Glass.filterMorph) { selectedType = type }
+                        }
                     )
                 }
             }
+        }
+    }
+
+    /// Get a softer accent color for each achievement type
+    private func getTypeColor(_ type: AchievementType) -> Color {
+        switch type {
+        case .totalSessions: return Color(hex: "7FA584") // sage green
+        case .streak: return Color(hex: "F4A596") // coral
+        case .totalMinutes: return Color(hex: "B8A9C9") // lavender
+        case .focusTotalSessions: return Color(hex: "E8A87C") // warm orange
+        case .focusStreak: return Color(hex: "F7DC6F") // soft gold
+        case .focusTotalMinutes: return Color(hex: "5DADE2") // teal blue
         }
     }
 
@@ -129,19 +141,54 @@ struct AchievementsGalleryView: View {
         .padding(.vertical, Constants.Spacing.extraLarge)
     }
 
-    private var backgroundGradient: some View {
-        LinearGradient(
-            colors: [
-                colorScheme == .dark
-                    ? Color(white: 0.15)
-                    : Color(white: 0.98),
-                colorScheme == .dark
-                    ? Color(white: 0.12)
-                    : Color(white: 0.95)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
+}
+
+// MARK: - Filter Pill Button
+
+/// A pill-shaped filter button with liquid glass styling
+struct FilterPillButton: View {
+    let title: String
+    let isSelected: Bool
+    var accentColor: Color = .accentColor
+    let action: () -> Void
+
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.caption.weight(isSelected ? .semibold : .medium))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .foregroundColor(isSelected ? .white : .primary)
+        }
+        .buttonStyle(.plain)
+        .background(
+            Group {
+                if isSelected {
+                    Capsule()
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(colors: [
+                                    accentColor,
+                                    accentColor.opacity(0.8)
+                                ]),
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .shadow(color: accentColor.opacity(0.3), radius: 4, x: 0, y: 2)
+                } else {
+                    Capsule()
+                        .fill(Color.primary.opacity(0.05))
+                        .overlay(
+                            Capsule()
+                                .strokeBorder(Color.primary.opacity(0.1), lineWidth: 1)
+                        )
+                }
+            }
         )
+        .animation(reduceMotion ? nil : .spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
     }
 }
 
@@ -151,6 +198,8 @@ struct TypeFilterButton: View {
     let isSelected: Bool
     let action: () -> Void
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     var body: some View {
         Button(action: action) {
             Text(title)
@@ -158,14 +207,35 @@ struct TypeFilterButton: View {
                 .fontWeight(isSelected ? .semibold : .regular)
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
+                .foregroundColor(isSelected ? .white : .primary)
+        }
+        .buttonStyle(.plain)
+        .applyGlassFilterButtonStyle(isSelected: isSelected)
+        .animation(reduceMotion ? nil : Constants.Animation.buttonSpring, value: isSelected)
+    }
+}
+
+// MARK: - Glass Filter Button Style Extension
+
+extension View {
+    /// Apply glass filter button styling
+    @ViewBuilder
+    func applyGlassFilterButtonStyle(isSelected: Bool) -> some View {
+        if #available(iOS 26.0, *) {
+            self
+                .glassEffect(
+                    isSelected
+                        ? .regular.tint(Constants.Colors.accent(for: .light)).interactive()
+                        : .clear.interactive(),
+                    in: .capsule
+                )
+        } else {
+            self
                 .background(
                     Capsule()
                         .fill(isSelected ? Constants.Colors.accent(for: .light) : Color.primary.opacity(0.05))
                 )
-                .foregroundColor(isSelected ? .white : .primary)
-                .animation(Constants.Animation.buttonSpring, value: isSelected)
         }
-        .buttonStyle(.plain)
     }
 }
 
@@ -179,7 +249,7 @@ struct AchievementCard: View {
             VStack(spacing: Constants.Spacing.small) {
                 ZStack {
                     Circle()
-                        .fill(isUnlocked ? achievement.color.opacity(0.15) : Color.primary.opacity(0.03))
+                        .fill(isUnlocked ? achievement.color.opacity(0.12) : Color.primary.opacity(0.03))
                         .frame(width: 60, height: 60)
 
                     Image(systemName: achievement.iconName)
@@ -211,14 +281,7 @@ struct AchievementCard: View {
             }
             .frame(maxWidth: .infinity)
             .padding(Constants.Spacing.small)
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.primary.opacity(0.02))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(isUnlocked ? achievement.color.opacity(0.3) : Color.clear, lineWidth: 1)
-            )
+            .glassAchievementCard(isUnlocked: isUnlocked, color: achievement.color)
         }
         .buttonStyle(.plain)
         .disabled(!isUnlocked)
@@ -235,7 +298,7 @@ struct AchievementDetailView: View {
             VStack(spacing: Constants.Spacing.large) {
                 ZStack {
                     Circle()
-                        .fill(achievement.color.opacity(0.15))
+                        .fill(achievement.color.opacity(0.12))
                         .frame(width: 120, height: 120)
 
                     Image(systemName: achievement.iconName)
@@ -256,7 +319,7 @@ struct AchievementDetailView: View {
                         .padding(.vertical, 6)
                         .background(
                             Capsule()
-                                .fill(achievement.color.opacity(0.15))
+                                .fill(achievement.color.opacity(0.12))
                         )
                 }
 
@@ -306,9 +369,9 @@ extension AchievementType {
         case .totalSessions: return "Sessions"
         case .streak: return "Streak"
         case .totalMinutes: return "Minutes"
-        case .focusTotalSessions: return "Focus Sessions"
+        case .focusTotalSessions: return "Focus"
         case .focusStreak: return "Focus Streak"
-        case .focusTotalMinutes: return "Focus Minutes"
+        case .focusTotalMinutes: return "Focus Mins"
         }
     }
 
@@ -317,9 +380,9 @@ extension AchievementType {
         case .totalSessions: return "sessions"
         case .streak: return "days"
         case .totalMinutes: return "minutes"
-        case .focusTotalSessions: return "focus sessions"
+        case .focusTotalSessions: return "sessions"
         case .focusStreak: return "days"
-        case .focusTotalMinutes: return "focus minutes"
+        case .focusTotalMinutes: return "minutes"
         }
     }
 }

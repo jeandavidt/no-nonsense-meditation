@@ -66,6 +66,7 @@ struct StatisticsDashboardView: View {
             }
         }
         .pickerStyle(.segmented)
+        .padding(.vertical, 4)
     }
 
     private func errorView(_ error: Error) -> some View {
@@ -101,7 +102,6 @@ struct FocusStatisticsCardView: View {
     let statistics: SessionStatistics
 
     @State private var isAnimated = false
-    @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         VStack(spacing: 12) {
@@ -159,29 +159,12 @@ struct FocusStatisticsCardView: View {
             .padding(.top, 4)
         }
         .padding(16)
-        .background(backgroundGradient)
-        .cornerRadius(12)
-        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+        .glassCard(tint: .orange.opacity(0.15), cornerRadius: 12)
         .onAppear {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                 isAnimated = true
             }
         }
-    }
-
-    private var backgroundGradient: some View {
-        LinearGradient(
-            colors: [
-                colorScheme == .dark
-                    ? Color(white: 0.15)
-                    : Color(white: 0.98),
-                colorScheme == .dark
-                    ? Color(white: 0.12)
-                    : Color(white: 0.95)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
     }
 
     private func formatMinutes(_ minutes: Double) -> String {
@@ -196,7 +179,7 @@ struct FocusStatisticsCardView: View {
     }
 }
 
-/// Individual focus statistic card
+/// Individual focus statistic card with glass effect
 private struct FocusStatCard: View {
 
     let icon: String
@@ -234,10 +217,7 @@ private struct FocusStatCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.primary.opacity(0.03))
-        )
+        .glassStatCard(accentColor: iconColor)
     }
 }
 

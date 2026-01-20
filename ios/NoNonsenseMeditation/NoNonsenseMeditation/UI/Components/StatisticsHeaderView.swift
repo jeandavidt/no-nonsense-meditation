@@ -57,9 +57,7 @@ struct StatisticsHeaderView: View {
             }
         }
         .padding(Constants.Layout.cardPadding)
-        .background(backgroundGradient)
-        .cornerRadius(Constants.Layout.cardCornerRadius)
-        .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 4)
+        .glassCard(tint: .green.opacity(0.15), cornerRadius: Constants.Layout.cardCornerRadius)
         .onAppear {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
                 isAnimated = true
@@ -169,22 +167,6 @@ struct StatisticsHeaderView: View {
         .frame(height: 8)
     }
 
-    /// Background gradient for the card
-    private var backgroundGradient: some View {
-        LinearGradient(
-            colors: [
-                colorScheme == .dark
-                    ? Color(white: 0.15)
-                    : Color(white: 0.98),
-                colorScheme == .dark
-                    ? Color(white: 0.12)
-                    : Color(white: 0.95)
-            ],
-            startPoint: .topLeading,
-            endPoint: .bottomTrailing
-        )
-    }
-
     // MARK: - Helper Methods
 
     /// Format total time for display
@@ -232,7 +214,7 @@ struct StatisticsHeaderView: View {
 
 // MARK: - Statistic Card Subview
 
-/// Individual statistic card displaying an icon, value, and label
+/// Individual statistic card displaying an icon, value, and label with glass effect
 private struct StatisticCard: View {
 
     // MARK: - Properties
@@ -278,10 +260,7 @@ private struct StatisticCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, Constants.Spacing.small)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.primary.opacity(0.03))
-        )
+        .glassStatCard(accentColor: iconColor)
     }
 }
 
