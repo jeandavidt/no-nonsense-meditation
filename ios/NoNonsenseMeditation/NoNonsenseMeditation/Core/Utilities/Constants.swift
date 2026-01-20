@@ -164,6 +164,28 @@ enum Constants {
 
         /// Ease in-out for view transitions
         static let transition = SwiftUI.Animation.easeInOut(duration: 0.3)
+
+        // MARK: - Glass Effect Animations (iOS 26+)
+
+        enum Glass {
+            /// Bouncy animation for glass morphing transitions
+            static let morphing = SwiftUI.Animation.bouncy(duration: 0.4, extraBounce: 0.1)
+
+            /// Spring animation for glass button press feedback
+            static let buttonPress = SwiftUI.Animation.spring(response: 0.2, dampingFraction: 0.7)
+
+            /// Smooth animation for glass appearance
+            static let appearance = SwiftUI.Animation.easeOut(duration: 0.25)
+
+            /// Animation for glass card hover/selection states
+            static let selection = SwiftUI.Animation.spring(response: 0.35, dampingFraction: 0.8)
+
+            /// Default spacing for GlassEffectContainer
+            static let containerSpacing: CGFloat = 40.0
+
+            /// Animation for filter button morphing
+            static let filterMorph = SwiftUI.Animation.bouncy(duration: 0.3)
+        }
     }
 
     // MARK: - Sound

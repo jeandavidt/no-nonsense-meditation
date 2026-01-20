@@ -46,19 +46,53 @@ struct Achievement: Identifiable, Codable, Equatable, Hashable {
         self.threshold = threshold
     }
 
+    /// Softer, more pastel colors optimized for liquid glass transparency
     var color: Color {
         switch iconColor {
-        case "green": return .green
-        case "blue": return .blue
-        case "purple": return .purple
-        case "orange": return .orange
-        case "red": return .red
-        case "yellow": return .yellow
-        case "cyan": return .cyan
-        case "pink": return .pink
-        case "indigo": return .indigo
-        case "teal": return .teal
-        default: return .gray
+        // Meditation/Session achievements - soft sage greens
+        case "sageGreen": return Color(hex: "7FA584")
+        case "mint": return Color(hex: "98D4BB")
+        case "forest": return Color(hex: "4A7C59")
+        
+        // Streak achievements - warm corals and peaches
+        case "coral": return Color(hex: "F4A596")
+        case "peach": return Color(hex: "FFCBA4")
+        case "warmOrange": return Color(hex: "E8A87C")
+        
+        // Minutes achievements - soft purples and lavenders
+        case "lavender": return Color(hex: "B8A9C9")
+        case "softPurple": return Color(hex: "957DAD")
+        case "violet": return Color(hex: "836BAA")
+        
+        // Focus achievements - teals and blues
+        case "teal": return Color(hex: "5DADE2")
+        case "softTeal": return Color(hex: "76D7C4")
+        case "skyBlue": return Color(hex: "85C1E9")
+        
+        // Gold/trophy - warm yellows
+        case "softGold": return Color(hex: "F7DC6F")
+        case "warmYellow": return Color(hex: "F5B041")
+        
+        // Red/pink - soft rose
+        case "softRose": return Color(hex: "E8DAEF")
+        case "rose": return Color(hex: "D7BDE2")
+        
+        // Neutral
+        case "slate": return Color(hex: "85929E")
+        
+        // Legacy colors (fallback)
+        case "green": return Color(hex: "7FA584")
+        case "blue": return Color(hex: "5DADE2")
+        case "purple": return Color(hex: "957DAD")
+        case "orange": return Color(hex: "E8A87C")
+        case "red": return Color(hex: "E6B0AA")
+        case "yellow": return Color(hex: "F7DC6F")
+        case "cyan": return Color(hex: "76D7C4")
+        case "pink": return Color(hex: "D7BDE2")
+        case "indigo": return Color(hex: "AED6F1")
+        case "tealLegacy": return Color(hex: "5DADE2")
+        
+        default: return Color(hex: "85929E")
         }
     }
 }
@@ -80,7 +114,7 @@ extension Achievement {
             name: "First Steps",
             description: "Complete your first meditation session",
             iconName: "leaf.fill",
-            iconColor: "green",
+            iconColor: "sageGreen",
             threshold: 1
         ),
         Achievement(
@@ -89,7 +123,7 @@ extension Achievement {
             name: "Getting Started",
             description: "Complete 5 meditation sessions",
             iconName: "flame.fill",
-            iconColor: "orange",
+            iconColor: "coral",
             threshold: 5
         ),
         Achievement(
@@ -98,7 +132,7 @@ extension Achievement {
             name: "Rising Star",
             description: "Complete 10 meditation sessions",
             iconName: "star.fill",
-            iconColor: "yellow",
+            iconColor: "softGold",
             threshold: 10
         ),
         Achievement(
@@ -107,7 +141,7 @@ extension Achievement {
             name: "Dedicated Practitioner",
             description: "Complete 25 meditation sessions",
             iconName: "moon.stars.fill",
-            iconColor: "indigo",
+            iconColor: "lavender",
             threshold: 25
         ),
         Achievement(
@@ -116,7 +150,7 @@ extension Achievement {
             name: "Mindfulness Master",
             description: "Complete 50 meditation sessions",
             iconName: "crown.fill",
-            iconColor: "purple",
+            iconColor: "softPurple",
             threshold: 50
         ),
         Achievement(
@@ -125,7 +159,7 @@ extension Achievement {
             name: "Zen Master",
             description: "Complete 100 meditation sessions",
             iconName: "sparkles",
-            iconColor: "cyan",
+            iconColor: "teal",
             threshold: 100
         )
     ]
@@ -137,7 +171,7 @@ extension Achievement {
             name: "On a Roll",
             description: "Maintain a 3-day meditation streak",
             iconName: "wave.3.left.circle.fill",
-            iconColor: "blue",
+            iconColor: "skyBlue",
             threshold: 3
         ),
         Achievement(
@@ -146,7 +180,7 @@ extension Achievement {
             name: "Week Warrior",
             description: "Maintain a 7-day meditation streak",
             iconName: "calendar.badge.clock",
-            iconColor: "teal",
+            iconColor: "softTeal",
             threshold: 7
         ),
         Achievement(
@@ -155,7 +189,7 @@ extension Achievement {
             name: "Two Week Triumph",
             description: "Maintain a 14-day meditation streak",
             iconName: "figure.mind.and.body",
-            iconColor: "purple",
+            iconColor: "violet",
             threshold: 14
         ),
         Achievement(
@@ -164,7 +198,7 @@ extension Achievement {
             name: "Month Master",
             description: "Maintain a 30-day meditation streak",
             iconName: "sun.max.fill",
-            iconColor: "yellow",
+            iconColor: "warmYellow",
             threshold: 30
         ),
         Achievement(
@@ -173,7 +207,7 @@ extension Achievement {
             name: "Dedicated Soul",
             description: "Maintain a 60-day meditation streak",
             iconName: "heart.fill",
-            iconColor: "red",
+            iconColor: "rose",
             threshold: 60
         ),
         Achievement(
@@ -182,7 +216,7 @@ extension Achievement {
             name: "Unstoppable",
             description: "Maintain a 90-day meditation streak",
             iconName: "infinity",
-            iconColor: "pink",
+            iconColor: "softRose",
             threshold: 90
         )
     ]
@@ -194,7 +228,7 @@ extension Achievement {
             name: "Quick Start",
             description: "Meditate for 15 total minutes",
             iconName: "timer",
-            iconColor: "green",
+            iconColor: "mint",
             threshold: 15
         ),
         Achievement(
@@ -203,7 +237,7 @@ extension Achievement {
             name: "Hour Power",
             description: "Meditate for 60 total minutes",
             iconName: "clock.fill",
-            iconColor: "blue",
+            iconColor: "skyBlue",
             threshold: 60
         ),
         Achievement(
@@ -212,7 +246,7 @@ extension Achievement {
             name: "Double Time",
             description: "Meditate for 120 total minutes",
             iconName: "hourglass",
-            iconColor: "purple",
+            iconColor: "lavender",
             threshold: 120
         ),
         Achievement(
@@ -221,7 +255,7 @@ extension Achievement {
             name: "Marathon Runner",
             description: "Meditate for 300 total minutes",
             iconName: "figure.run",
-            iconColor: "orange",
+            iconColor: "peach",
             threshold: 300
         ),
         Achievement(
@@ -239,7 +273,7 @@ extension Achievement {
             name: "Day of Zen",
             description: "Meditate for 1440 total minutes (24 hours)",
             iconName: "sun.max.circle.fill",
-            iconColor: "yellow",
+            iconColor: "warmYellow",
             threshold: 1440
         )
     ]
@@ -253,7 +287,7 @@ extension Achievement {
             name: "First Focus",
             description: "Complete your first focus session",
             iconName: "brain.head.profile",
-            iconColor: "orange",
+            iconColor: "warmOrange",
             threshold: 1
         ),
         Achievement(
@@ -262,7 +296,7 @@ extension Achievement {
             name: "Focused Flow",
             description: "Complete 5 focus sessions",
             iconName: "bolt.fill",
-            iconColor: "yellow",
+            iconColor: "softGold",
             threshold: 5
         ),
         Achievement(
@@ -271,7 +305,7 @@ extension Achievement {
             name: "Deep Work",
             description: "Complete 10 focus sessions",
             iconName: "sparkle.magnifyingglass",
-            iconColor: "purple",
+            iconColor: "violet",
             threshold: 10
         ),
         Achievement(
@@ -280,7 +314,7 @@ extension Achievement {
             name: "Concentration Master",
             description: "Complete 25 focus sessions",
             iconName: "scope",
-            iconColor: "teal",
+            iconColor: "softTeal",
             threshold: 25
         ),
         Achievement(
@@ -289,7 +323,7 @@ extension Achievement {
             name: "Productivity Pro",
             description: "Complete 50 focus sessions",
             iconName: "chart.line.uptrend.xyaxis",
-            iconColor: "green",
+            iconColor: "sageGreen",
             threshold: 50
         ),
         Achievement(
@@ -298,7 +332,7 @@ extension Achievement {
             name: "Focus Champion",
             description: "Complete 100 focus sessions",
             iconName: "trophy.fill",
-            iconColor: "gold",
+            iconColor: "warmYellow",
             threshold: 100
         )
     ]
@@ -310,7 +344,7 @@ extension Achievement {
             name: "Focus Starter",
             description: "Maintain a 3-day focus streak",
             iconName: "brain",
-            iconColor: "orange",
+            iconColor: "warmOrange",
             threshold: 3
         ),
         Achievement(
@@ -319,7 +353,7 @@ extension Achievement {
             name: "Weekly Warrior",
             description: "Maintain a 7-day focus streak",
             iconName: "calendar.badge.checkmark",
-            iconColor: "yellow",
+            iconColor: "softGold",
             threshold: 7
         ),
         Achievement(
@@ -328,7 +362,7 @@ extension Achievement {
             name: "Two Week Focus",
             description: "Maintain a 14-day focus streak",
             iconName: "target",
-            iconColor: "red",
+            iconColor: "rose",
             threshold: 14
         ),
         Achievement(
@@ -337,7 +371,7 @@ extension Achievement {
             name: "Focus Month",
             description: "Maintain a 30-day focus streak",
             iconName: "calendar",
-            iconColor: "purple",
+            iconColor: "softPurple",
             threshold: 30
         )
     ]
@@ -349,7 +383,7 @@ extension Achievement {
             name: "One Hour Deep Work",
             description: "Focus for 60 total minutes",
             iconName: "timer",
-            iconColor: "orange",
+            iconColor: "warmOrange",
             threshold: 60
         ),
         Achievement(
@@ -358,7 +392,7 @@ extension Achievement {
             name: "Three Hour Focus",
             description: "Focus for 180 total minutes",
             iconName: "clock.fill",
-            iconColor: "yellow",
+            iconColor: "softGold",
             threshold: 180
         ),
         Achievement(
@@ -367,7 +401,7 @@ extension Achievement {
             name: "Five Hours Flow",
             description: "Focus for 300 total minutes",
             iconName: "hourglass",
-            iconColor: "purple",
+            iconColor: "violet",
             threshold: 300
         ),
         Achievement(
@@ -376,7 +410,7 @@ extension Achievement {
             name: "Ten Hours Mastery",
             description: "Focus for 600 total minutes",
             iconName: "mountain.2.fill",
-            iconColor: "teal",
+            iconColor: "softTeal",
             threshold: 600
         ),
         Achievement(
@@ -385,7 +419,7 @@ extension Achievement {
             name: "Quarter Century Focus",
             description: "Focus for 1500 total minutes",
             iconName: "star.fill",
-            iconColor: "gold",
+            iconColor: "warmYellow",
             threshold: 1500
         )
     ]
