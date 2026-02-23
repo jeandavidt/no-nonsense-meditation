@@ -13,6 +13,7 @@ import SwiftUI
 enum SessionType: String, Codable, CaseIterable, Identifiable {
     case meditation = "meditation"
     case focus = "focus"
+    case sleep = "sleep"
     
     var id: String { rawValue }
     
@@ -23,6 +24,8 @@ enum SessionType: String, Codable, CaseIterable, Identifiable {
             return "Meditation"
         case .focus:
             return "Focus"
+        case .sleep:
+            return "Sleep"
         }
     }
     
@@ -33,6 +36,8 @@ enum SessionType: String, Codable, CaseIterable, Identifiable {
             return "Mindfulness"
         case .focus:
             return "Deep Work"
+        case .sleep:
+            return "Rest & Recovery"
         }
     }
     
@@ -43,6 +48,8 @@ enum SessionType: String, Codable, CaseIterable, Identifiable {
             return "leaf.fill"
         case .focus:
             return "brain.head.profile"
+        case .sleep:
+            return "moon.fill"
         }
     }
     
@@ -53,6 +60,8 @@ enum SessionType: String, Codable, CaseIterable, Identifiable {
             return "checkmark.circle.fill"
         case .focus:
             return "bolt.fill"
+        case .sleep:
+            return "bed.double.fill"
         }
     }
     
@@ -63,6 +72,8 @@ enum SessionType: String, Codable, CaseIterable, Identifiable {
             return "green"
         case .focus:
             return "orange"
+        case .sleep:
+            return "blue"
         }
     }
 
@@ -73,6 +84,8 @@ enum SessionType: String, Codable, CaseIterable, Identifiable {
             return .green
         case .focus:
             return .orange
+        case .sleep:
+            return .blue
         }
     }
 }
@@ -87,6 +100,8 @@ extension SessionType {
             self = .meditation
         case "focus":
             self = .focus
+        case "sleep":
+            self = .sleep
         default:
             return nil
         }
