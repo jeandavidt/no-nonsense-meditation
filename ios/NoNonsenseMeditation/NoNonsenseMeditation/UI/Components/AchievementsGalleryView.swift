@@ -11,6 +11,12 @@ struct AchievementsGalleryView: View {
     @State private var achievementService = AchievementService.shared
     @State private var selectedType: AchievementType?
     @State private var selectedAchievement: Achievement?
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    private var gridColumns: [GridItem] {
+        let count = horizontalSizeClass == .regular ? 4 : 3
+        return Array(repeating: GridItem(.flexible(), spacing: Constants.Spacing.small), count: count)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Constants.Spacing.medium) {
@@ -105,9 +111,7 @@ struct AchievementsGalleryView: View {
         if filteredAchievements.isEmpty {
             emptyState
         } else {
-            LazyVGrid(columns: [
-                GridItem(.adaptive(minimum: 110), spacing: Constants.Spacing.small)
-            ], spacing: Constants.Spacing.small) {
+            LazyVGrid(columns: gridColumns, spacing: Constants.Spacing.small) {
                 ForEach(filteredAchievements) { achievement in
                     AchievementCard(
                         achievement: achievement,
@@ -267,7 +271,7 @@ struct AchievementCard: View {
                         .foregroundColor(.primary)
                         .lineLimit(2)
                         .multilineTextAlignment(.center)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(height: 28)
 
                     HStack(spacing: 4) {
                         if isUnlocked {

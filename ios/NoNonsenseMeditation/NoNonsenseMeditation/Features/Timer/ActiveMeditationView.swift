@@ -26,6 +26,10 @@ struct ActiveMeditationView: View {
     /// Whether to show confirmation for early termination
     @State private var showCancelConfirmation = false
 
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    private var dialSize: CGFloat { horizontalSizeClass == .regular ? 320 : 250 }
+
     // MARK: - Initialization
 
     init(viewModel: TimerViewModel, sessionType: SessionType = .meditation) {
@@ -128,7 +132,8 @@ struct ActiveMeditationView: View {
                 isRunning: viewModel.isRunning,
                 isPaused: viewModel.isPaused,
                 isCompleted: viewModel.isCompleted,
-                sessionType: sessionType
+                sessionType: sessionType,
+                size: dialSize
             )
 
             // Additional info

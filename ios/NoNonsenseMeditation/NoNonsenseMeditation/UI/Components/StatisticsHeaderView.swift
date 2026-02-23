@@ -254,7 +254,7 @@ private struct StatisticCard: View {
                 .fontWeight(.medium)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
-                .fixedSize(horizontal: false, vertical: true)
+                .frame(height: 28)
                 .offset(y: isAnimated ? 0 : 10)
                 .opacity(isAnimated ? 1.0 : 0.0)
         }

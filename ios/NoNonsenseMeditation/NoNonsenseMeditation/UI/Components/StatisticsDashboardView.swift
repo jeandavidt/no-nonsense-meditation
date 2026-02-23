@@ -15,33 +15,31 @@ struct StatisticsDashboardView: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                // Data source picker (if HealthKit available)
-                if viewModel.isHealthKitAvailable {
-                    dataSourcePicker
-                        .padding(.horizontal)
-                }
-
-                // Statistics display
-                if viewModel.isLoading {
-                    ProgressView("Loading statistics...")
-                        .padding()
-                } else if let error = viewModel.error {
-                    errorView(error)
-                } else {
-                    StatisticsHeaderView(
-                        statistics: viewModel.statistics,
-                        showWeeklyBreakdown: true
-                    )
-
-                    // Focus session statistics
-                    FocusStatisticsCardView(statistics: viewModel.statistics)
-                }
-
-                // Achievements Gallery
-                AchievementsGalleryView()
+        VStack(spacing: 16) {
+            // Data source picker (if HealthKit available)
+            if viewModel.isHealthKitAvailable {
+                dataSourcePicker
+                    .padding(.horizontal)
             }
+
+            // Statistics display
+            if viewModel.isLoading {
+                ProgressView("Loading statistics...")
+                    .padding()
+            } else if let error = viewModel.error {
+                errorView(error)
+            } else {
+                StatisticsHeaderView(
+                    statistics: viewModel.statistics,
+                    showWeeklyBreakdown: true
+                )
+
+                // Focus session statistics
+                FocusStatisticsCardView(statistics: viewModel.statistics)
+            }
+
+            // Achievements Gallery
+            AchievementsGalleryView()
         }
         .task {
             await viewModel.checkHealthKitAvailability()

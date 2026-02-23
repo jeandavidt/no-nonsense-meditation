@@ -495,7 +495,7 @@ extension Achievement {
             type: .sleepStreak,
             name: "Weekly Rest",
             description: "Maintain a 7-day sleep streak",
-            iconName: "calendar.badge.moon",
+            iconName: "moon.zzz",
             iconColor: "softTeal",
             threshold: 7
         ),

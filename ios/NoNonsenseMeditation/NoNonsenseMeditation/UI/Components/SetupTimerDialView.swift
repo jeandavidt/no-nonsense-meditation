@@ -20,7 +20,7 @@ struct SetupTimerDialView: View {
     var sessionType: SessionType = .meditation
 
     /// Size of the dial
-    private let size: CGFloat = 250
+    var size: CGFloat = 250
 
     /// Stroke width for the ring
     private let strokeWidth: CGFloat = 8

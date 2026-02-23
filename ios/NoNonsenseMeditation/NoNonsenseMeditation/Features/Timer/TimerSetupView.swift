@@ -20,6 +20,10 @@ struct TimerSetupView: View {
     /// Intent coordinator for handling App Intent actions
     @State private var intentCoordinator = IntentCoordinator.shared
 
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+
+    private var dialSize: CGFloat { horizontalSizeClass == .regular ? 320 : 250 }
+
     /// Selected duration in minutes (loaded from UserDefaults)
     @State private var selectedDuration: Int = {
         let savedDuration = UserDefaults.standard.integer(forKey: Constants.UserDefaultsKeys.defaultDuration)
@@ -71,7 +75,8 @@ struct TimerSetupView: View {
                     // Hero timer dial preview with swipe support
                     SetupTimerDialView(
                         durationMinutes: $selectedDuration,
-                        sessionType: highlightedSessionType ?? .meditation
+                        sessionType: highlightedSessionType ?? .meditation,
+                        size: dialSize
                     )
                     .padding(.bottom, 16)
                     .animation(.easeInOut(duration: 0.3), value: highlightedSessionType)
@@ -166,7 +171,7 @@ struct TimerSetupView: View {
                 .tracking(1.2)
                 .padding(.horizontal, 24)
 
-            ScrollView(.horizontal, showsIndicators: false) {
+            if horizontalSizeClass == .regular {
                 HStack(spacing: 10) {
                     ForEach(durationOptions, id: \.self) { minutes in
                         DurationChip(
@@ -175,7 +180,6 @@ struct TimerSetupView: View {
                             action: {
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                                     selectedDuration = minutes
-                                    // Save to UserDefaults
                                     UserDefaults.standard.set(minutes, forKey: Constants.UserDefaultsKeys.defaultDuration)
                                 }
                             }
@@ -183,6 +187,24 @@ struct TimerSetupView: View {
                     }
                 }
                 .padding(.horizontal, 20)
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 10) {
+                        ForEach(durationOptions, id: \.self) { minutes in
+                            DurationChip(
+                                minutes: minutes,
+                                isSelected: selectedDuration == minutes,
+                                action: {
+                                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                        selectedDuration = minutes
+                                        UserDefaults.standard.set(minutes, forKey: Constants.UserDefaultsKeys.defaultDuration)
+                                    }
+                                }
+                            )
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                }
             }
         }
     }

@@ -41,7 +41,7 @@ struct CircularTimerDial: View {
     private let strokeWidth: CGFloat = 12
 
     /// Size of the dial
-    private let size: CGFloat = 250
+    var size: CGFloat = 250
 
     /// Color scheme
     private var activeColor: Color {
