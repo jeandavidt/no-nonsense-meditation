@@ -147,6 +147,8 @@ struct SessionRecapView: View {
             return "Great job on completing your meditation session"
         case .focus:
             return "Great job on completing your focus session"
+        case .sleep:
+            return "Rest well and goodnight!"
         }
     }
 

@@ -45,7 +45,14 @@ struct CircularTimerDial: View {
 
     /// Color scheme
     private var activeColor: Color {
-        sessionType == .meditation ? .green : .orange
+        switch sessionType {
+        case .meditation:
+            return .green
+        case .focus:
+            return .orange
+        case .sleep:
+            return .blue
+        }
     }
     private let inactiveColor: Color = .gray.opacity(0.2)
     private let pausedColor: Color = .yellow
@@ -71,18 +78,17 @@ struct CircularTimerDial: View {
         }
     }
 
-    /// Gradient for the progress ring
-    private var progressGradient: AngularGradient {
+    /// Gradient for the progress ring - uniform color to avoid dim sections
+    private var progressGradient: LinearGradient {
         let baseColor = currentColor
-        return AngularGradient(
+        // Use a subtle linear gradient along the ring for depth without creating dim sections
+        return LinearGradient(
             gradient: Gradient(colors: [
-                baseColor.opacity(0.5),
-                baseColor.opacity(0.7),
+                baseColor.opacity(0.9),
                 baseColor
             ]),
-            center: .center,
-            startAngle: .degrees(-90),
-            endAngle: .degrees(-90 + 360 * progress)
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
         )
     }
 
@@ -319,6 +325,16 @@ struct CircularTimerDial: View {
             isPaused: false,
             isCompleted: false,
             sessionType: .focus
+        )
+        
+        CircularTimerDial(
+            progress: 0.4,
+            totalDuration: 900,
+            remainingTime: 540,
+            isRunning: true,
+            isPaused: false,
+            isCompleted: false,
+            sessionType: .sleep
         )
     }
     .padding()

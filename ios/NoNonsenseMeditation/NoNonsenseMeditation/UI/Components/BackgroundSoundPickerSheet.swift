@@ -23,6 +23,9 @@ struct BackgroundSoundPickerSheet: View {
 
     /// Callback when music is selected
     var onSelectMusic: ((MusicLibraryItem) -> Void)?
+    
+    /// Callback when music picker should be shown for a specific content type
+    var onShowMusicPicker: ((MusicPickerView.Tab) -> Void)?
 
     /// Whether to show music picker
     @Binding var showMusicPicker: Bool
@@ -41,6 +44,14 @@ struct BackgroundSoundPickerSheet: View {
                             dismiss()
                             // Small delay to allow sheet to dismiss before showing fullScreenCover
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                onShowMusicPicker?(.songs)
+                                showMusicPicker = true
+                            }
+                        } else if sound.usesPodcastLibrary {
+                            dismiss()
+                            // Small delay to allow sheet to dismiss before showing fullScreenCover
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                                onShowMusicPicker?(.podcasts)
                                 showMusicPicker = true
                             }
                         } else {
@@ -69,8 +80,8 @@ struct BackgroundSoundPickerSheet: View {
 
                             Spacer()
 
-                            // Chevron for music library
-                            if sound.usesUserLibrary {
+                            // Chevron for music library and podcasts
+                            if sound.usesUserLibrary || sound.usesPodcastLibrary {
                                 Image(systemName: "chevron.right")
                                     .font(.caption)
                                     .foregroundColor(.secondary)

@@ -32,6 +32,9 @@ struct TimerSetupView: View {
     /// Navigation state for focus session
     @State private var isFocusActive = false
 
+    /// Navigation state for sleep session
+    @State private var isSleepActive = false
+
     /// Navigation state for settings
     @State private var showSettings = false
 
@@ -40,6 +43,9 @@ struct TimerSetupView: View {
 
     /// Whether to show the music picker full screen cover
     @State private var showMusicPicker = false
+    
+    /// Initial tab to show in music picker
+    @State private var musicPickerInitialTab: MusicPickerView.Tab = .songs
 
     /// Currently highlighted session type for visual feedback
     @State private var highlightedSessionType: SessionType? = nil
@@ -106,6 +112,9 @@ struct TimerSetupView: View {
             .navigationDestination(isPresented: $isFocusActive) {
                 ActiveMeditationView(viewModel: viewModel, sessionType: .focus)
             }
+            .navigationDestination(isPresented: $isSleepActive) {
+                ActiveMeditationView(viewModel: viewModel, sessionType: .sleep)
+            }
             .navigationDestination(isPresented: $showSettings) {
                 SettingsTabView()
             }
@@ -119,6 +128,9 @@ struct TimerSetupView: View {
                     onSelectMusic: { item in
                         viewModel.setMusicLibraryItem(item)
                     },
+                    onShowMusicPicker: { tab in
+                        musicPickerInitialTab = tab
+                    },
                     showMusicPicker: $showMusicPicker
                 )
             }
@@ -128,8 +140,10 @@ struct TimerSetupView: View {
                     onSelection: { item in
                         viewModel.setMusicLibraryItem(item)
                     },
-                    providesNavigation: true
+                    providesNavigation: true,
+                    initialTab: musicPickerInitialTab
                 )
+                .id(musicPickerInitialTab) // Force view recreation when tab changes
             }
             .task {
                 handlePendingIntentAction()
@@ -195,12 +209,16 @@ struct TimerSetupView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
 
-                    if viewModel.selectedBackgroundSound.usesUserLibrary,
+                    if (viewModel.selectedBackgroundSound.usesUserLibrary || viewModel.selectedBackgroundSound.usesPodcastLibrary),
                        let item = viewModel.selectedMusicLibraryItem {
-                        Text(item.title)
-                            .font(.body)
-                            .foregroundColor(.primary)
-                            .lineLimit(1)
+                        HStack(spacing: 4) {
+                            Image(systemName: item.iconName)
+                                .font(.caption)
+                            Text(item.title)
+                                .font(.body)
+                        }
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
                     } else {
                         Text(viewModel.selectedBackgroundSound.displayName)
                             .font(.body)
@@ -225,66 +243,74 @@ struct TimerSetupView: View {
 
     /// Start buttons section
     private var startButtonSection: some View {
-        VStack(spacing: 12) {
-            // Meditation button - Primary
-            Button(action: {
-                startMeditation()
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "leaf.fill")
-                    Text("Start Meditation")
-                }
-                .font(.headline)
-                .foregroundColor(.white)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(
-                    LinearGradient(
-                        gradient: Gradient(colors: [Color.green, Color.green.opacity(0.85)]),
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-                .shadow(color: Color.green.opacity(0.3), radius: 8, x: 0, y: 4)
-            }
-            .buttonStyle(.plain)
-            .disabled(selectedDuration <= 0)
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { _ in highlightedSessionType = .meditation }
-                    .onEnded { _ in highlightedSessionType = nil }
+        HStack(spacing: 12) {
+            // Meditation
+            sessionButton(
+                type: .meditation,
+                title: "Meditate",
+                icon: "leaf.fill",
+                color: .green,
+                action: startMeditation
             )
-
-            // Focus button - Secondary
-            Button(action: {
-                startFocusSession()
-            }) {
-                HStack(spacing: 8) {
-                    Image(systemName: "brain.head.profile")
-                    Text("Start Focus Session")
-                }
-                .font(.headline)
-                .foregroundColor(.orange)
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 16)
-                .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .strokeBorder(Color.orange.opacity(0.5), lineWidth: 1.5)
-                        .background(
-                            RoundedRectangle(cornerRadius: 14)
-                                .fill(Color.orange.opacity(0.08))
-                        )
-                )
-            }
-            .buttonStyle(.plain)
-            .disabled(selectedDuration <= 0)
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { _ in highlightedSessionType = .focus }
-                    .onEnded { _ in highlightedSessionType = nil }
+            
+            // Focus
+            sessionButton(
+                type: .focus,
+                title: "Focus",
+                icon: "brain.head.profile",
+                color: .orange,
+                action: startFocusSession
+            )
+            
+            // Sleep
+            sessionButton(
+                type: .sleep,
+                title: "Sleep",
+                icon: "moon.fill",
+                color: .blue,
+                action: startSleepSession
             )
         }
+    }
+    
+    private func sessionButton(
+        type: SessionType,
+        title: String,
+        icon: String,
+        color: Color,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            VStack(spacing: 12) {
+                Image(systemName: icon)
+                    .font(.system(size: 28))
+                Text(title)
+                    .font(.headline)
+            }
+            .foregroundColor(color)
+            .frame(maxWidth: .infinity)
+            .frame(height: 100)
+            .background(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(color.opacity(0.1))
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .strokeBorder(color.opacity(0.3), lineWidth: 1)
+                    )
+            )
+            // Glass effect overlay
+            .overlay(
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(.white.opacity(0.05))
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(selectedDuration <= 0)
+        .simultaneousGesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in highlightedSessionType = type }
+                .onEnded { _ in highlightedSessionType = nil }
+        )
     }
 
     // MARK: - Methods
@@ -326,6 +352,18 @@ struct TimerSetupView: View {
         viewModel.stopPreview()
         viewModel.startTimer(duration: durationInSeconds, sessionType: .focus)
         isFocusActive = true
+    }
+
+    /// Start sleep session with selected duration
+    private func startSleepSession() {
+        guard selectedDuration > 0 else { return }
+
+        let impact = UIImpactFeedbackGenerator(style: .medium)
+        impact.impactOccurred()
+
+        viewModel.stopPreview()
+        viewModel.startTimer(duration: durationInSeconds, sessionType: .sleep)
+        isSleepActive = true
     }
 
     /// Handle pending intent actions from App Intents (Shortcuts, Siri)

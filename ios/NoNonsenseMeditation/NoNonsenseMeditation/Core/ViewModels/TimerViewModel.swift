@@ -132,15 +132,17 @@ class TimerViewModel {
             await updateFromTimerService()
 
             // Start background sound if selected
-            if selectedBackgroundSound.usesUserLibrary, let musicItem = selectedMusicLibraryItem {
-                // Play from user's music library
-                try? await audioService.startUserLibraryMusic(musicItem)
-            } else if selectedBackgroundSound.id != "none" {
+            if selectedBackgroundSound.usesUserLibrary || selectedBackgroundSound.usesPodcastLibrary, let mediaItem = selectedMusicLibraryItem {
+                // Play from user's music library or podcasts
+                try? await audioService.startUserLibraryMusic(mediaItem)
+            } else {
                 try? await audioService.startBackgroundSound(selectedBackgroundSound)
             }
 
-            // Play start sound
-            try? await audioService.playStartSound()
+            // Play start sound (skip for sleep sessions)
+            if sessionType != .sleep {
+                try? await audioService.playStartSound()
+            }
 
             // Schedule completion notification
             await notificationService.scheduleCompletionNotification(for: duration)
@@ -163,9 +165,11 @@ class TimerViewModel {
             
             // Pause background sound
             await audioService.pauseBackgroundSound()
-            
-            // Play pause sound
-            try? await audioService.playPauseSound()
+
+            // Play pause sound (skip for sleep sessions)
+            if sessionType != .sleep {
+                try? await audioService.playPauseSound()
+            }
             
             // Cancel completion notification
             await notificationService.cancelCompletionNotification()
@@ -196,9 +200,11 @@ class TimerViewModel {
             
             // Resume background sound
             await audioService.resumeBackgroundSound()
-            
-            // Play resume sound
-            try? await audioService.playResumeSound()
+
+            // Play resume sound (skip for sleep sessions)
+            if sessionType != .sleep {
+                try? await audioService.playResumeSound()
+            }
             
             // Update state
             self.state = .running
@@ -220,9 +226,9 @@ class TimerViewModel {
             // Determine actual meditation time
             let actualMeditationTime = await timerService.getActualMeditationTime()
 
-            // Play completion sound only if not suppressed due to overtime
+            // Play completion sound only if not suppressed due to overtime and not a sleep session
             let isOvertime = actualMeditationTime > totalDuration
-            if !(suppressCompletionIfOvertime && isOvertime) {
+            if !(suppressCompletionIfOvertime && isOvertime) && sessionType != .sleep {
                 await audioService.playCompletionSound()
             }
 
@@ -416,7 +422,12 @@ class TimerViewModel {
         // But we DO NOT stop the background sound here.
         if remainingTime <= 0 && !hasPlayedCompletionSound && state == .running {
             hasPlayedCompletionSound = true
-            await audioService.playCompletionSound()
+            
+            // Only play completion sound if not a sleep session
+            if sessionType != .sleep {
+                await audioService.playCompletionSound()
+            }
+            
             // We do NOT call stopBackgroundSound() here anymore.
             // It continues until user explicitly stops it.
         }
@@ -503,14 +514,24 @@ class TimerViewModel {
         self.selectedMusicLibraryItem = MusicLibraryItem.loadFromUserDefaults()
     }
     
-    /// Set the music library item for the meditation session
+    /// Set the music/podcast library item for the meditation session
     /// - Parameter item: The music library item to use
     func setMusicLibraryItem(_ item: MusicLibraryItem) {
         self.selectedMusicLibraryItem = item
-        if let userLibrarySound = AmbianceSoundLoader.userLibrary {
-            self.selectedBackgroundSound = userLibrarySound
-            item.saveToUserDefaults()
-            userLibrarySound.saveToUserDefaults()
+        
+        // Set the appropriate sound based on item type
+        if item.itemType == .podcastEpisode || item.itemType == .podcastShow {
+            if let podcastLibrarySound = AmbianceSoundLoader.podcastLibrary {
+                self.selectedBackgroundSound = podcastLibrarySound
+                item.saveToUserDefaults()
+                podcastLibrarySound.saveToUserDefaults()
+            }
+        } else {
+            if let userLibrarySound = AmbianceSoundLoader.userLibrary {
+                self.selectedBackgroundSound = userLibrarySound
+                item.saveToUserDefaults()
+                userLibrarySound.saveToUserDefaults()
+            }
         }
     }
     

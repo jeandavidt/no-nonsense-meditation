@@ -155,8 +155,8 @@ final class SessionManager {
         // Save context
         try persistenceController.saveContext()
 
-        // Sync to HealthKit if authorized, session is valid, and it's NOT a focus session
-        if session.isSessionValid && session.sessionType != "focus" {
+        // Sync to HealthKit if authorized, session is valid, and it's NOT a focus or sleep session
+        if session.isSessionValid && session.sessionType != "focus" && session.sessionType != "sleep" {
             await syncToHealthKit(session: session)
         }
 
@@ -219,8 +219,8 @@ final class SessionManager {
         // Save context
         try? persistenceController.saveContext()
 
-        // Sync to HealthKit if authorized, session is valid, and it's NOT a focus session
-        if session.isSessionValid && session.sessionType != "focus" {
+        // Sync to HealthKit if authorized, session is valid, and it's NOT a focus or sleep session
+        if session.isSessionValid && session.sessionType != "focus" && session.sessionType != "sleep" {
             await syncToHealthKit(session: session)
         }
 
