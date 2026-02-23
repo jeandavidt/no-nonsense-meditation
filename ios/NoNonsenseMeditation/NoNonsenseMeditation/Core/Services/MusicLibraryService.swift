@@ -145,6 +145,110 @@ actor MusicLibraryService {
         return filtered.map { MusicLibraryItem(mediaItem: $0) }
     }
     
+    // MARK: - Fetching Podcasts
+    
+    /// Fetch all podcast shows from the user's library
+    /// - Returns: Array of music library items representing podcast shows
+    func fetchPodcastShows() async throws -> [MusicLibraryItem] {
+        guard getAuthorizationStatus() == .authorized else {
+            throw MusicLibraryError.notAuthorized
+        }
+        
+        let query = MPMediaQuery.podcasts()
+        let items = query.items ?? []
+        
+        // Group episodes by podcast title to get unique shows
+        var podcastShows: [String: MPMediaItem] = [:]
+        
+        for item in items {
+            // Use podcastTitle as the key
+            if let podcastTitle = item.podcastTitle ?? item.albumTitle {
+                // Only add if we haven't seen this show yet
+                if podcastShows[podcastTitle] == nil {
+                    podcastShows[podcastTitle] = item
+                }
+            }
+        }
+        
+        // Convert to MusicLibraryItem array
+        return podcastShows.values.compactMap { item -> MusicLibraryItem? in
+            guard let podcastTitle = item.podcastTitle ?? item.albumTitle else { return nil }
+            
+            // Create a MusicLibraryItem representing the podcast show
+            return MusicLibraryItem(
+                persistentID: item.albumPersistentID,
+                itemType: .podcastShow,
+                title: podcastTitle,
+                artist: item.artist,
+                album: nil,
+                duration: nil,
+                itemCount: nil,
+                podcastShowTitle: nil
+            )
+        }
+    }
+    
+    /// Fetch all podcast episodes from the user's library
+    /// - Returns: Array of music library items representing podcast episodes
+    func fetchAllPodcastEpisodes() async throws -> [MusicLibraryItem] {
+        guard getAuthorizationStatus() == .authorized else {
+            throw MusicLibraryError.notAuthorized
+        }
+        
+        let query = MPMediaQuery.podcasts()
+        let items = query.items ?? []
+        
+        return items.compactMap { item -> MusicLibraryItem? in
+            // Only include items that are actually podcast episodes
+            guard let _ = item.podcastTitle else { return nil }
+            return MusicLibraryItem(podcastEpisode: item)
+        }
+    }
+    
+    /// Fetch podcast episodes for a specific show
+    /// - Parameter showPersistentID: The persistent ID of the podcast show
+    /// - Returns: Array of music library items representing podcast episodes
+    func fetchPodcastEpisodes(for showPersistentID: UInt64) async throws -> [MusicLibraryItem] {
+        guard getAuthorizationStatus() == .authorized else {
+            throw MusicLibraryError.notAuthorized
+        }
+        
+        let query = MPMediaQuery.podcasts()
+        
+        // Filter by album persistent ID (podcast shows are grouped by album)
+        query.addFilterPredicate(
+            MPMediaPropertyPredicate(
+                value: showPersistentID,
+                forProperty: MPMediaItemPropertyAlbumPersistentID
+            )
+        )
+        
+        let items = query.items ?? []
+        
+        return items.map { MusicLibraryItem(podcastEpisode: $0) }
+    }
+    
+    /// Search podcasts by title
+    /// - Parameter searchText: Text to search for
+    /// - Returns: Array of matching music library items (shows and episodes)
+    func searchPodcasts(query searchText: String) async throws -> [MusicLibraryItem] {
+        guard getAuthorizationStatus() == .authorized else {
+            throw MusicLibraryError.notAuthorized
+        }
+        
+        let query = MPMediaQuery.podcasts()
+        let items = query.items ?? []
+        
+        let lowercasedSearch = searchText.lowercased()
+        let filtered = items.filter { item in
+            let titleMatch = item.title?.lowercased().contains(lowercasedSearch) ?? false
+            let podcastTitleMatch = item.podcastTitle?.lowercased().contains(lowercasedSearch) ?? false
+            return titleMatch || podcastTitleMatch
+        }
+        
+        return filtered.map { MusicLibraryItem(podcastEpisode: $0) }
+    }
+    
     // MARK: - Playback
     
     /// Start playing a music library item
@@ -192,6 +296,39 @@ actor MusicLibraryService {
             }
             
             player.setQueue(with: playlist)
+            
+        case .podcastShow:
+            // For podcast shows, play all episodes
+            let query = MPMediaQuery.podcasts()
+            query.addFilterPredicate(
+                MPMediaPropertyPredicate(
+                    value: item.persistentID,
+                    forProperty: MPMediaPlaylistPropertyPersistentID
+                )
+            )
+            
+            guard let playlist = query.collections?.first as? MPMediaPlaylist else {
+                throw MusicLibraryError.itemNotFound
+            }
+            
+            player.setQueue(with: playlist)
+            
+        case .podcastEpisode:
+            // For podcast episodes, play just that episode
+            let query = MPMediaQuery.podcasts()
+            query.addFilterPredicate(
+                MPMediaPropertyPredicate(
+                    value: item.persistentID,
+                    forProperty: MPMediaItemPropertyPersistentID
+                )
+            )
+            
+            guard let mediaItem = query.items?.first else {
+                throw MusicLibraryError.itemNotFound
+            }
+            
+            let collection = MPMediaItemCollection(items: [mediaItem])
+            player.setQueue(with: collection)
         }
         
         // Configure for looping

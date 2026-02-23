@@ -54,7 +54,8 @@ def generate_swift(sounds: list) -> str:
                       "filename: {}, " \
                       "fileExtension: {}, " \
                       "requiresFile: {}, " \
-                      "isUserLibrary: {})".format(
+                      "isUserLibrary: {}, " \
+                      "isPodcastLibrary: {})".format(
                           escape_string(sound.get('id', '')),
                           escape_string(sound.get('displayName', '')),
                           escape_string(sound.get('iconName', '')),
@@ -62,7 +63,8 @@ def generate_swift(sounds: list) -> str:
                           swift_optional(sound.get('filename')),
                           swift_optional(sound.get('fileExtension')),
                           str(sound.get('requiresFile', False)).lower(),
-                          str(sound.get('isUserLibrary', False)).lower()
+                          str(sound.get('isUserLibrary', False)).lower(),
+                          str(sound.get('isPodcastLibrary', False)).lower()
                       )
         sounds_array.append("    " + initializer)
     
@@ -110,10 +112,16 @@ struct AmbianceSound: Identifiable, Codable, Sendable, Hashable {
     /// Whether this sound uses the user's music library
     let isUserLibrary: Bool
     
+    /// Whether this sound uses the podcasts library
+    let isPodcastLibrary: Bool
+    
     // MARK: - Computed Properties
     
     /// Whether this sound uses the user's music library
     var usesUserLibrary: Bool { isUserLibrary }
+    
+    /// Whether this sound uses the podcasts library
+    var usesPodcastLibrary: Bool { isPodcastLibrary }
 }
 
 // MARK: - Ambiance Sound Loader
@@ -141,6 +149,9 @@ enum AmbianceSoundLoader {
     
     /// The user library sound option
     static let userLibrary: AmbianceSound? = allSounds.first { $0.isUserLibrary }
+    
+    /// The podcasts library sound option
+    static let podcastLibrary: AmbianceSound? = allSounds.first { $0.isPodcastLibrary }
 }
 
 // MARK: - UserDefaults Persistence

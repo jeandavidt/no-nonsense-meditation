@@ -18,6 +18,8 @@ struct MusicLibraryItem: Codable, Equatable, Sendable {
     enum ItemType: String, Codable, Sendable {
         case song
         case playlist
+        case podcastEpisode
+        case podcastShow
     }
     
     // MARK: - Properties
@@ -31,11 +33,14 @@ struct MusicLibraryItem: Codable, Equatable, Sendable {
     /// Display title of the item
     let title: String
     
-    /// Artist name (for songs) or empty for playlists
+    /// Artist name (for songs) or empty for playlists/podcasts
     let artist: String?
     
-    /// Album name (for songs) or empty for playlists
+    /// Album name (for songs) or empty for playlists/podcasts
     let album: String?
+    
+    /// Podcast show title (for podcast episodes)
+    let podcastShowTitle: String?
     
     /// Duration in seconds (for songs, nil for playlists)
     let duration: TimeInterval?
@@ -54,6 +59,31 @@ struct MusicLibraryItem: Codable, Equatable, Sendable {
         self.album = mediaItem.albumTitle
         self.duration = mediaItem.playbackDuration
         self.itemCount = nil
+        self.podcastShowTitle = nil
+    }
+    
+    /// Initialize from a podcast episode media item
+    init(podcastEpisode: MPMediaItem) {
+        self.persistentID = podcastEpisode.persistentID
+        self.itemType = .podcastEpisode
+        self.title = podcastEpisode.title ?? "Unknown Episode"
+        self.artist = podcastEpisode.artist
+        self.album = podcastEpisode.albumTitle
+        self.duration = podcastEpisode.playbackDuration
+        self.itemCount = nil
+        self.podcastShowTitle = podcastEpisode.albumTitle
+    }
+    
+    /// Initialize from a podcast show (playlist-like)
+    init(podcastShow: MPMediaPlaylist) {
+        self.persistentID = podcastShow.persistentID
+        self.itemType = .podcastShow
+        self.title = podcastShow.name ?? "Unknown Podcast"
+        self.artist = nil
+        self.album = nil
+        self.duration = nil
+        self.itemCount = podcastShow.items.count
+        self.podcastShowTitle = nil
     }
     
     /// Initialize from a playlist
@@ -65,6 +95,7 @@ struct MusicLibraryItem: Codable, Equatable, Sendable {
         self.album = nil
         self.duration = nil
         self.itemCount = playlist.items.count
+        self.podcastShowTitle = nil
     }
     
     /// Initialize with explicit values (for persistence)
@@ -75,7 +106,8 @@ struct MusicLibraryItem: Codable, Equatable, Sendable {
         artist: String?,
         album: String?,
         duration: TimeInterval?,
-        itemCount: Int?
+        itemCount: Int?,
+        podcastShowTitle: String? = nil
     ) {
         self.persistentID = persistentID
         self.itemType = itemType
@@ -84,6 +116,7 @@ struct MusicLibraryItem: Codable, Equatable, Sendable {
         self.album = album
         self.duration = duration
         self.itemCount = itemCount
+        self.podcastShowTitle = podcastShowTitle
     }
     
     // MARK: - Display Properties
@@ -101,6 +134,19 @@ struct MusicLibraryItem: Codable, Equatable, Sendable {
                 return "\(count) song\(count == 1 ? "" : "s")"
             }
             return "Playlist"
+        case .podcastEpisode:
+            if let show = podcastShowTitle {
+                return show
+            }
+            if let artist = artist {
+                return artist
+            }
+            return "Podcast Episode"
+        case .podcastShow:
+            if let count = itemCount {
+                return "\(count) episode\(count == 1 ? "" : "s")"
+            }
+            return "Podcast"
         }
     }
     
@@ -111,6 +157,10 @@ struct MusicLibraryItem: Codable, Equatable, Sendable {
             return "music.note"
         case .playlist:
             return "music.note.list"
+        case .podcastEpisode:
+            return "antenna.radiowaves.left.and.right"
+        case .podcastShow:
+            return "mic.fill"
         }
     }
 }

@@ -39,10 +39,16 @@ struct AmbianceSound: Identifiable, Codable, Sendable, Hashable {
     /// Whether this sound uses the user's music library
     let isUserLibrary: Bool
     
+    /// Whether this sound uses the podcasts library
+    let isPodcastLibrary: Bool
+    
     // MARK: - Computed Properties
     
     /// Whether this sound uses the user's music library
     var usesUserLibrary: Bool { isUserLibrary }
+    
+    /// Whether this sound uses the podcasts library
+    var usesPodcastLibrary: Bool { isPodcastLibrary }
 }
 
 // MARK: - Ambiance Sound Loader
@@ -53,11 +59,12 @@ enum AmbianceSoundLoader {
     /// All available ambiance sounds
     /// This array is generated at build time from ambiance_sounds.json
     static let allSounds: [AmbianceSound] = [
-    AmbianceSound(id: "none", displayName: "No Background Sound", iconName: "speaker.slash", description: "Silence", filename: nil, fileExtension: nil, requiresFile: false, isUserLibrary: false),
-    AmbianceSound(id: "brown_noise", displayName: "Brown Noise", iconName: "waveform", description: "Deep ambient noise", filename: "brown_noise", fileExtension: "m4a", requiresFile: true, isUserLibrary: false),
-    AmbianceSound(id: "library_noise", displayName: "Library Ambience", iconName: "building.2", description: "Quiet study atmosphere", filename: "library_noise", fileExtension: "m4a", requiresFile: true, isUserLibrary: false),
-    AmbianceSound(id: "wind_chimes", displayName: "Wind Chimes", iconName: "wind", description: "Gentle chimes", filename: "wind_chimes", fileExtension: "m4a", requiresFile: true, isUserLibrary: false),
-    AmbianceSound(id: "user_library", displayName: "Music Library", iconName: "music.note.list", description: "Play from your library", filename: nil, fileExtension: nil, requiresFile: false, isUserLibrary: true)
+    AmbianceSound(id: "none", displayName: "No Background Sound", iconName: "speaker.slash", description: "Silence", filename: nil, fileExtension: nil, requiresFile: false, isUserLibrary: false, isPodcastLibrary: false),
+    AmbianceSound(id: "brown_noise", displayName: "Brown Noise", iconName: "waveform", description: "Deep ambient noise", filename: "brown_noise", fileExtension: "m4a", requiresFile: true, isUserLibrary: false, isPodcastLibrary: false),
+    AmbianceSound(id: "library_noise", displayName: "Library Ambience", iconName: "building.2", description: "Quiet study atmosphere", filename: "library_noise", fileExtension: "m4a", requiresFile: true, isUserLibrary: false, isPodcastLibrary: false),
+    AmbianceSound(id: "wind_chimes", displayName: "Wind Chimes", iconName: "wind", description: "Gentle chimes", filename: "wind_chimes", fileExtension: "m4a", requiresFile: true, isUserLibrary: false, isPodcastLibrary: false),
+    AmbianceSound(id: "user_library", displayName: "Music Library", iconName: "music.note.list", description: "Play from your library", filename: nil, fileExtension: nil, requiresFile: false, isUserLibrary: true, isPodcastLibrary: false),
+    AmbianceSound(id: "podcasts", displayName: "Podcasts", iconName: "mic.fill", description: "Play from your podcasts", filename: nil, fileExtension: nil, requiresFile: false, isUserLibrary: false, isPodcastLibrary: true)
     ]
     
     /// Find a sound by its ID
@@ -72,6 +79,9 @@ enum AmbianceSoundLoader {
     
     /// The user library sound option
     static let userLibrary: AmbianceSound? = allSounds.first { $0.isUserLibrary }
+    
+    /// The podcasts library sound option
+    static let podcastLibrary: AmbianceSound? = allSounds.first { $0.isPodcastLibrary }
 }
 
 // MARK: - UserDefaults Persistence

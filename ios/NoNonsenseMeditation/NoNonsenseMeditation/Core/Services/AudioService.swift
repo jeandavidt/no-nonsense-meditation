@@ -171,14 +171,30 @@ actor AudioService: AudioServiceProtocol {
         // Stop any currently playing background sound
         stopBackgroundSound()
 
-        // If "none" is selected, just return without playing sound
-        guard sound.requiresFile, let filename = sound.filename, let fileExtension = sound.fileExtension else {
+        // Configure audio session and ACTIVE it immediately before playing
+        try await configureAudioSession(overrideSilent: overrideSilentMode)
+
+        // Determine the file to play
+        let filename: String
+        let fileExtension: String
+        let volume: Float
+
+        if sound.requiresFile, let soundFilename = sound.filename, let soundExtension = sound.fileExtension {
+            // Use the selected sound file
+            filename = soundFilename
+            fileExtension = soundExtension
+            volume = 0.7 // Slightly quieter than bells
+        } else if !sound.usesUserLibrary {
+            // "None" selected - play silent audio to keep session active for bells
+            // This ensures the end bell can play even when screen is off
+            filename = "silence"
+            fileExtension = "m4a"
+            volume = 0.0 // Completely silent
+        } else {
+            // User library - handled separately
             currentBackgroundSound = AmbianceSoundLoader.none
             return
         }
-
-        // Configure audio session and ACTIVE it immediately before playing
-        try await configureAudioSession(overrideSilent: overrideSilentMode)
 
         // Locate sound file in bundle
         guard let soundURL = Bundle.main.url(forResource: filename, withExtension: fileExtension) else {
@@ -189,7 +205,7 @@ actor AudioService: AudioServiceProtocol {
             // Create and configure audio player for looping
             let player = try AVAudioPlayer(contentsOf: soundURL)
             player.numberOfLoops = -1 // Infinite looping
-            player.volume = 0.7 // Slightly quieter than bells
+            player.volume = volume
             player.prepareToPlay()
             player.play()
 

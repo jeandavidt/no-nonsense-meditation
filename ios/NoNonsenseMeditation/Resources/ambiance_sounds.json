@@ -48,5 +48,16 @@
     "fileExtension": null,
     "requiresFile": false,
     "isUserLibrary": true
+  },
+  {
+    "id": "podcasts",
+    "displayName": "Podcasts",
+    "iconName": "mic.fill",
+    "description": "Play from your podcasts",
+    "filename": null,
+    "fileExtension": null,
+    "requiresFile": false,
+    "isUserLibrary": false,
+    "isPodcastLibrary": true
   }
 ]
