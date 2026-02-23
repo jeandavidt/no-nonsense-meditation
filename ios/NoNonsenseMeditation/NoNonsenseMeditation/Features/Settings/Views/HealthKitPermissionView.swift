@@ -389,6 +389,7 @@ struct HealthKitPermissionView: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview("Not Determined") {
     @Previewable @State var viewModel = HealthKitViewModel()
     HealthKitPermissionView(viewModel: viewModel)
@@ -420,3 +421,4 @@ struct HealthKitPermissionView: View {
             viewModel.setAuthState(.notAvailable)
         }
 }
+#endif

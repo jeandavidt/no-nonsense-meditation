@@ -103,6 +103,7 @@ struct HealthKitSettingsRow: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview("Authorized") {
     @Previewable @State var viewModel = HealthKitViewModel()
     List {
@@ -132,3 +133,4 @@ struct HealthKitSettingsRow: View {
         viewModel.setAuthState(.denied)
     }
 }
+#endif
