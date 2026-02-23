@@ -92,6 +92,9 @@ struct AchievementsGalleryView: View {
         case .focusTotalSessions: return Color(hex: "E8A87C") // warm orange
         case .focusStreak: return Color(hex: "F7DC6F") // soft gold
         case .focusTotalMinutes: return Color(hex: "5DADE2") // teal blue
+        case .sleepTotalSessions: return Color(hex: "5DADE2") // sky blue
+        case .sleepStreak: return Color(hex: "76D7C4") // soft teal
+        case .sleepTotalMinutes: return Color(hex: "B8A9C9") // lavender
         }
     }
 
@@ -372,6 +375,9 @@ extension AchievementType {
         case .focusTotalSessions: return "Focus"
         case .focusStreak: return "Focus Streak"
         case .focusTotalMinutes: return "Focus Mins"
+        case .sleepTotalSessions: return "Sleep"
+        case .sleepStreak: return "Sleep Streak"
+        case .sleepTotalMinutes: return "Sleep Mins"
         }
     }
 
@@ -383,6 +389,9 @@ extension AchievementType {
         case .focusTotalSessions: return "sessions"
         case .focusStreak: return "days"
         case .focusTotalMinutes: return "minutes"
+        case .sleepTotalSessions: return "sessions"
+        case .sleepStreak: return "days"
+        case .sleepTotalMinutes: return "minutes"
         }
     }
 }

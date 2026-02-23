@@ -15,6 +15,9 @@ enum AchievementType: String, Codable, CaseIterable, Identifiable {
     case focusTotalSessions
     case focusStreak
     case focusTotalMinutes
+    case sleepTotalSessions
+    case sleepStreak
+    case sleepTotalMinutes
 
     var id: String { rawValue }
 }
@@ -104,7 +107,10 @@ extension Achievement {
         minutesAchievements,
         focusSessionsAchievements,
         focusStreakAchievements,
-        focusMinutesAchievements
+        focusMinutesAchievements,
+        sleepSessionsAchievements,
+        sleepStreakAchievements,
+        sleepMinutesAchievements
     ].flatMap { $0 }
 
     static let totalSessionsAchievements: [Achievement] = [
@@ -421,6 +427,134 @@ extension Achievement {
             iconName: "star.fill",
             iconColor: "warmYellow",
             threshold: 1500
+        )
+    ]
+
+    // MARK: - Sleep Session Achievements
+
+    static let sleepSessionsAchievements: [Achievement] = [
+        Achievement(
+            id: "first_sleep_session",
+            type: .sleepTotalSessions,
+            name: "First Rest",
+            description: "Complete your first sleep session",
+            iconName: "moon.fill",
+            iconColor: "skyBlue",
+            threshold: 1
+        ),
+        Achievement(
+            id: "five_sleep_sessions",
+            type: .sleepTotalSessions,
+            name: "Regular Rest",
+            description: "Complete 5 sleep sessions",
+            iconName: "bed.double.fill",
+            iconColor: "softTeal",
+            threshold: 5
+        ),
+        Achievement(
+            id: "ten_sleep_sessions",
+            type: .sleepTotalSessions,
+            name: "Sleep Routine",
+            description: "Complete 10 sleep sessions",
+            iconName: "moon.stars.fill",
+            iconColor: "lavender",
+            threshold: 10
+        ),
+        Achievement(
+            id: "twenty_five_sleep_sessions",
+            type: .sleepTotalSessions,
+            name: "Deep Sleeper",
+            description: "Complete 25 sleep sessions",
+            iconName: "zzz",
+            iconColor: "violet",
+            threshold: 25
+        ),
+        Achievement(
+            id: "fifty_sleep_sessions",
+            type: .sleepTotalSessions,
+            name: "Rest Master",
+            description: "Complete 50 sleep sessions",
+            iconName: "sparkles",
+            iconColor: "indigo",
+            threshold: 50
+        )
+    ]
+
+    static let sleepStreakAchievements: [Achievement] = [
+        Achievement(
+            id: "three_day_sleep_streak",
+            type: .sleepStreak,
+            name: "Sleep Starter",
+            description: "Maintain a 3-day sleep streak",
+            iconName: "moon.circle.fill",
+            iconColor: "skyBlue",
+            threshold: 3
+        ),
+        Achievement(
+            id: "seven_day_sleep_streak",
+            type: .sleepStreak,
+            name: "Weekly Rest",
+            description: "Maintain a 7-day sleep streak",
+            iconName: "calendar.badge.moon",
+            iconColor: "softTeal",
+            threshold: 7
+        ),
+        Achievement(
+            id: "fourteen_day_sleep_streak",
+            type: .sleepStreak,
+            name: "Fortnight of Sleep",
+            description: "Maintain a 14-day sleep streak",
+            iconName: "bed.double.circle.fill",
+            iconColor: "lavender",
+            threshold: 14
+        ),
+        Achievement(
+            id: "thirty_day_sleep_streak",
+            type: .sleepStreak,
+            name: "Sleep Month",
+            description: "Maintain a 30-day sleep streak",
+            iconName: "calendar",
+            iconColor: "violet",
+            threshold: 30
+        )
+    ]
+
+    static let sleepMinutesAchievements: [Achievement] = [
+        Achievement(
+            id: "one_hour_sleep",
+            type: .sleepTotalMinutes,
+            name: "Power Nap",
+            description: "Sleep for 60 total minutes",
+            iconName: "timer",
+            iconColor: "skyBlue",
+            threshold: 60
+        ),
+        Achievement(
+            id: "five_hours_sleep",
+            type: .sleepTotalMinutes,
+            name: "Good Night's Rest",
+            description: "Sleep for 300 total minutes",
+            iconName: "clock.fill",
+            iconColor: "softTeal",
+            threshold: 300
+        ),
+        Achievement(
+            id: "ten_hours_sleep",
+            type: .sleepTotalMinutes,
+            name: "Deep Slumber",
+            description: "Sleep for 600 total minutes",
+            iconName: "moon.zzz.fill",
+            iconColor: "lavender",
+            threshold: 600
+        ),
+        Achievement(
+            id: "twenty_four_hours_sleep",
+            type: .sleepTotalMinutes,
+            name: "Day of Dreams",
+            description: "Sleep for 1440 total minutes",
+            iconName: "star.fill",
+            iconColor: "indigo",
+            threshold: 1440
         )
     ]
 }

@@ -52,21 +52,26 @@ class AchievementService {
         do {
             let sessions: [MeditationSession]
             let focusSessions: [MeditationSession]
+            let sleepSessions: [MeditationSession]
 
             if let specificType = sessionType {
                 sessions = try sessionService.fetchValidSessions(byType: specificType)
                 focusSessions = specificType == .focus ? sessions : []
+                sleepSessions = specificType == .sleep ? sessions : []
             } else {
                 sessions = try sessionService.fetchValidSessions()
                 focusSessions = try sessionService.fetchValidSessions(byType: .focus)
+                sleepSessions = try sessionService.fetchValidSessions(byType: .sleep)
             }
 
             let totalMinutes = sessions.reduce(0) { $0 + $1.durationTotal }
             let focusTotalMinutes = focusSessions.reduce(0) { $0 + $1.durationTotal }
+            let sleepTotalMinutes = sleepSessions.reduce(0) { $0 + $1.durationTotal }
 
             let streakCalculator = StreakCalculator()
             let streak = streakCalculator.calculateCurrentStreak(from: sessions)
             let focusStreak = streakCalculator.calculateCurrentStreak(from: focusSessions)
+            let sleepStreak = streakCalculator.calculateCurrentStreak(from: sleepSessions)
 
             let allAchievements = Achievement.allAchievements
 
@@ -89,6 +94,12 @@ class AchievementService {
                     isUnlocked = focusStreak >= achievement.threshold
                 case .focusTotalMinutes:
                     isUnlocked = Int(focusTotalMinutes) >= achievement.threshold
+                case .sleepTotalSessions:
+                    isUnlocked = sleepSessions.count >= achievement.threshold
+                case .sleepStreak:
+                    isUnlocked = sleepStreak >= achievement.threshold
+                case .sleepTotalMinutes:
+                    isUnlocked = Int(sleepTotalMinutes) >= achievement.threshold
                 }
 
                 if isUnlocked {
